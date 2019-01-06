@@ -1,27 +1,42 @@
-package org.brokencircuits.equationestimator.domain;
+package org.brokencircuits.equationestimator.domain.node;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.brokencircuits.equationestimator.domain.ExpressionNode;
 
 @RequiredArgsConstructor
 @ToString
 @Slf4j
+@Value
 public class Operator implements INodeType {
 
   @NonNull
-  final Character character;
+  final OpChar opChar;
   @NonNull
   final ExpressionNode leftChild;
   @NonNull
   final ExpressionNode rightChild;
 
+  public String getOpChar() {
+    switch (opChar) {
+      case PLUS: return "+";
+      case MINUS: return "-";
+      case DIVIDE: return "/";
+      case MULTIPLY: return "*";
+      default:
+        log.error("Op Char invalid in node {}", this);
+        return "";
+    }
+  }
+
   @Override
   public double eval() {
     double leftValue = leftChild.eval();
     double rightValue = rightChild.eval();
-    switch (character) {
+    switch (opChar) {
       case PLUS:
         return leftValue + rightValue;
       case MINUS:
@@ -41,7 +56,7 @@ public class Operator implements INodeType {
     }
   }
 
-  enum Character {
+  public enum OpChar {
     PLUS, MINUS, MULTIPLY, DIVIDE
   }
 
