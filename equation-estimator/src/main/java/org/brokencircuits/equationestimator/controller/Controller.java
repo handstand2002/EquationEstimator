@@ -2,6 +2,7 @@ package org.brokencircuits.equationestimator.controller;
 
 
 import lombok.extern.slf4j.Slf4j;
+import org.brokencircuits.equationestimator.domain.ExpressionNode;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -11,6 +12,7 @@ public class Controller implements Runnable {
   @Override
   public void run() {
     log.info("Running something");
+
     try {
       Thread.sleep(1000);
     } catch (InterruptedException e) {
