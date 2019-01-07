@@ -1,5 +1,6 @@
 package org.brokencircuits.equationestimator.domain.node;
 
-public interface INodeType {
+public interface IDataTerminal extends IDataNode {
+
   double eval();
 }

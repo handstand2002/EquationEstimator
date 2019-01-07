@@ -1,14 +1,16 @@
 package org.brokencircuits.equationestimator.domain.node;
 
 import lombok.Data;
+import org.brokencircuits.equationestimator.domain.TreeNode;
 
 @Data
-public class Variable implements INodeType {
+public class Variable implements IDataTerminal {
 
   static private int lastId;
 
   final private int id;
   private double value;
+  private TreeNode parent;
 
   public Variable() {
     id = ++lastId;
@@ -18,4 +20,5 @@ public class Variable implements INodeType {
   public double eval() {
     return value;
   }
+
 }

@@ -1,9 +1,11 @@
 package org.brokencircuits.equationestimator.domain.node;
 
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
 @RequiredArgsConstructor
-public class Constant implements INodeType {
+@ToString
+public class Constant implements IDataTerminal {
 
   private final double value;
 
