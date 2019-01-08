@@ -95,6 +95,18 @@ public class TreeNode {
     }
   }
 
+  public TreeNode clone(Equation newContainer, TreeNode newParent) {
+    //public TreeNode(Equation container, IDataNode dataNode, TreeNode leftChild, TreeNode rightChild)
+//    IDataNode newDataNode = this.dataNode.clone();
+    // TODO: Finish this
+    return null;
+  }
+
+  public TreeNode cloneTree() {
+    // TODO: Finish this
+    return null;
+  }
+
   /* ***************************** STATIC FUNCTIONS ***************************** */
   public static String equationReadableOperatorNode(TreeNode fromNode, boolean variableShowValue) {
 
@@ -160,7 +172,6 @@ public class TreeNode {
       equationTreeNode(anonymousNode.rightChild, depth + 1, treeStrings);
     }
   }
-
 
   public enum WhichChild {
     LEFT, RIGHT

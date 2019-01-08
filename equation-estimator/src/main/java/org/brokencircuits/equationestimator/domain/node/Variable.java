@@ -17,8 +17,15 @@ public class Variable implements IDataTerminal {
   }
 
   @Override
+  public IDataNode clone() {
+    // TODO: Finish this
+    return this;
+  }
+
+  @Override
   public double eval() {
     return value;
   }
+
 
 }

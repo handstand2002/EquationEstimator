@@ -26,6 +26,12 @@ public class Operator implements IDataNode {
     this.opChar = opChar;
   }
 
+  @Override
+  public IDataNode clone() {
+    // TODO: finish this
+    return new Operator(opChar);
+  }
+
   public double operation(double x, double y) {
     switch (opChar) {
       case PLUS:

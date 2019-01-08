@@ -13,4 +13,10 @@ public class Constant implements IDataTerminal {
   public double eval() {
     return value;
   }
+
+  @Override
+  public IDataNode clone() {
+    // TODO: Finish this
+    return null;
+  }
 }

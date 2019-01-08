@@ -60,6 +60,13 @@ public class Equation {
 
   /* *************************** Public Function *************************** */
 
+  public Equation clone() {
+    Equation newEq = new Equation();
+    newEq.setRoot(this.root.cloneTree());
+    // TODO: Finish this
+    return null;
+  }
+
   public void removeNodeSubtreeFromList(TreeNode initial) {
     nodeList.remove(initial);
     if (initial.getLeftChild() != null) {
