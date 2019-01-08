@@ -16,16 +16,17 @@ public class StatisticTest {
   @SneakyThrows
   public void constructorWithTreeNode() {
     double delta = 0.0000001;
+    Equation eq = new Equation();
 
     Constant constant = new Constant(3);
     Variable variable = new Variable();
     variable.setValue(4);
     Operator operator = new Operator(Operator.PLUS);
-    TreeNode leftChild = new TreeNode(constant);
-    TreeNode rightChild = new TreeNode(variable);
+    TreeNode leftChild = new TreeNode(eq, constant);
+    TreeNode rightChild = new TreeNode(eq, variable);
 
     // when
-    TreeNode root = new TreeNode(operator, leftChild, rightChild);
+    TreeNode root = new TreeNode(eq, operator, leftChild, rightChild);
 
     // then
     Statistic stats = root.getStatistics();
@@ -40,24 +41,25 @@ public class StatisticTest {
   @SneakyThrows
   public void constructorWithDeeperTreeNode() {
     double delta = 0.0000001;
+    Equation eq = new Equation();
 
     Constant constant = new Constant(3);
 
     Operator operator = new Operator(Operator.PLUS);
-    TreeNode leftChild = new TreeNode(constant);
+    TreeNode leftChild = new TreeNode(eq, constant);
 
     Operator operator2 = new Operator(Operator.MINUS);
     Variable variable = new Variable();
     variable.setValue(4);
     Variable variable1 = new Variable();
     variable.setValue(3);
-    TreeNode leftSubChild = new TreeNode(variable);
-    TreeNode rightSubChild = new TreeNode(variable1);
+    TreeNode leftSubChild = new TreeNode(eq, variable);
+    TreeNode rightSubChild = new TreeNode(eq, variable1);
 
-    TreeNode rightChild = new TreeNode(operator2, leftSubChild, rightSubChild);
+    TreeNode rightChild = new TreeNode(eq, operator2, leftSubChild, rightSubChild);
 
     // when
-    TreeNode root = new TreeNode(operator, leftChild, rightChild);
+    TreeNode root = new TreeNode(eq, operator, leftChild, rightChild);
 
     // then
     Statistic stats = root.getStatistics();

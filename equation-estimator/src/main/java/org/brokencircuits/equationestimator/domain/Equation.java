@@ -4,19 +4,71 @@ import static org.brokencircuits.equationestimator.util.Chance.addOperatorNode;
 import static org.brokencircuits.equationestimator.util.Chance.addVariableNode;
 import static org.brokencircuits.equationestimator.util.Chance.randConstant;
 
+import com.google.common.collect.Lists;
 import java.util.List;
-import lombok.NonNull;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.brokencircuits.equationestimator.domain.node.Constant;
 import org.brokencircuits.equationestimator.domain.node.IDataNode;
 import org.brokencircuits.equationestimator.domain.node.Operator;
 import org.brokencircuits.equationestimator.domain.node.Variable;
 
 @RequiredArgsConstructor
+@Slf4j
 public class Equation {
 
-  @NonNull
-  final private TreeNode root;
+  private TreeNode root;
+  private boolean rootIsSet = false;
+  @Getter
+  private List<TreeNode> nodeList = Lists.newArrayList();
+
+  /* ****************** Static Functions ****************** */
+  static public Equation generateRandom(int avgNumOperators) {
+
+    Equation newEq = new Equation();
+    TreeNode rootNode = Equation.generateRandom(avgNumOperators, 0, newEq);
+    newEq.setRoot(rootNode);
+    return newEq;
+  }
+
+  static public TreeNode generateRandom(final int avgOpNodesDesired, int currentDepth,
+      Equation container) {
+
+    IDataNode newDataNode;
+    TreeNode newTreeNode;
+    if (addOperatorNode(avgOpNodesDesired, currentDepth)) {
+      TreeNode leftChild = generateRandom(avgOpNodesDesired, currentDepth + 1, container);
+      TreeNode rightChild = generateRandom(avgOpNodesDesired, currentDepth + 1, container);
+      newDataNode = new Operator(Operator.randOpChar());
+      newTreeNode = new TreeNode(container, newDataNode, leftChild, rightChild);
+    } else {
+      if (addVariableNode()) {
+        newDataNode = new Variable();
+        ((Variable) newDataNode).setValue(randConstant());
+        // TODO: Make any new variables retrieve variables from predefined pool
+      } else {
+        newDataNode = new Constant((double) randConstant());
+      }
+      newTreeNode = new TreeNode(container, newDataNode);
+    }
+
+    container.nodeList.add(newTreeNode);
+
+    return newTreeNode;
+  }
+
+  /* *************************** Public Function *************************** */
+
+  public void removeNodeSubtreeFromList(TreeNode initial) {
+    nodeList.remove(initial);
+    if (initial.getLeftChild() != null) {
+      removeNodeSubtreeFromList(initial.getLeftChild());
+    }
+    if (initial.getRightChild() != null) {
+      removeNodeSubtreeFromList(initial.getRightChild());
+    }
+  }
 
   public double eval() {
     return root.eval();
@@ -35,34 +87,13 @@ public class Equation {
     root.simplify();
   }
 
-  /* ****************** Static Functions ****************** */
-  static public Equation generateRandom(int avgNumOperators) {
-
-    TreeNode rootNode = Equation.generateRandom(avgNumOperators, 0);
-    return new Equation(rootNode);
-  }
-
-  static public TreeNode generateRandom(final int avgOpNodesDesired, int currentDepth) {
-
-    IDataNode newDataNode;
-    TreeNode newTreeNode;
-    if (addOperatorNode(avgOpNodesDesired, currentDepth)) {
-      TreeNode leftChild = generateRandom(avgOpNodesDesired, currentDepth + 1);
-      TreeNode rightChild = generateRandom(avgOpNodesDesired, currentDepth + 1);
-      newDataNode = new Operator(Operator.randOpChar());
-      newTreeNode = new TreeNode(newDataNode, leftChild, rightChild);
+  public void setRoot(TreeNode root) {
+    if (!rootIsSet) {
+      this.root = root;
+      rootIsSet = true;
     } else {
-      if (addVariableNode()) {
-        newDataNode = new Variable();
-        ((Variable) newDataNode).setValue(randConstant());
-        // TODO: Make any new variables retrieve variables from predefined pool
-      } else {
-        newDataNode = new Constant((double) randConstant());
-      }
-      newTreeNode = new TreeNode(newDataNode);
+      log.error("Cannot re-set root node of equation: {}", this);
     }
 
-    return newTreeNode;
   }
-
 }

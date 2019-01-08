@@ -5,7 +5,6 @@ import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.brokencircuits.equationestimator.domain.node.Constant;
@@ -18,6 +17,10 @@ import org.brokencircuits.equationestimator.domain.node.Variable;
 @ToString(exclude = {"leftChild", "rightChild", "parent"})
 public class TreeNode {
 
+  private static int lastId = 0;
+
+  @Getter
+  final private int id;
   @Getter
   @NonNull
   private IDataNode dataNode;
@@ -26,24 +29,35 @@ public class TreeNode {
   @Getter
   private TreeNode rightChild = null;
   @Getter
-  @Setter
   private TreeNode parent = null;
+  @Getter
+  private WhichChild whichChild;
+  private Equation container;
   @Getter
   private Statistic statistics;
 
-  public TreeNode(IDataNode dataNode, TreeNode leftChild, TreeNode rightChild) {
+  public TreeNode(Equation container, IDataNode dataNode, TreeNode leftChild, TreeNode rightChild) {
     this.dataNode = dataNode;
     this.leftChild = leftChild;
     this.rightChild = rightChild;
-    this.leftChild.setParent(this);
-    this.rightChild.setParent(this);
+    this.leftChild.setParent(this, WhichChild.LEFT);
+    this.rightChild.setParent(this, WhichChild.RIGHT);
+    this.container = container;
     statistics = new Statistic(this);
+    id = ++lastId;
   }
 
   @java.beans.ConstructorProperties({"dataNode"})
-  public TreeNode(IDataNode dataNode) {
+  public TreeNode(Equation container, IDataNode dataNode) {
+    this.container = container;
     this.dataNode = dataNode;
     statistics = new Statistic(this);
+    id = ++lastId;
+  }
+
+  public void setParent(TreeNode parent, WhichChild which) {
+    this.parent = parent;
+    this.whichChild = which;
   }
 
   public double eval() {
@@ -64,8 +78,21 @@ public class TreeNode {
   }
 
   public void simplify() {
-    log.info("Will do simplification here");
-    // TODO: Set up simplification
+    if (dataNode.getClass() == Operator.class) {
+      if (statistics.getNumDescendantVariable() == 0) {
+
+        this.dataNode = new Constant(this.eval());
+        this.container.removeNodeSubtreeFromList(this.leftChild);
+        this.container.removeNodeSubtreeFromList(this.rightChild);
+        this.leftChild = null;
+        this.rightChild = null;
+        this.statistics.onChange();
+
+      } else {
+        this.getLeftChild().simplify();
+        this.getRightChild().simplify();
+      }
+    }
   }
 
   /* ***************************** STATIC FUNCTIONS ***************************** */
@@ -116,7 +143,6 @@ public class TreeNode {
     final List<String> treeStrings = Lists.newArrayList();
 
     equationTreeNode(anonymousNode, 0, treeStrings);
-
     return treeStrings;
   }
 
@@ -135,4 +161,8 @@ public class TreeNode {
     }
   }
 
+
+  public enum WhichChild {
+    LEFT, RIGHT
+  }
 }

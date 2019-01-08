@@ -14,6 +14,17 @@ import org.brokencircuits.equationestimator.domain.node.Variable;
 public class Statistic {
 
   final private TreeNode linkedTreeNode;
+  final public static int NUM_DESCENDANT = 0;
+  final public static int NUM_DESCENDANT_OPERATOR = 1;
+  final public static int NUM_DESCENDANT_TERMINAL = 2;
+  final public static int NUM_DESCENDANT_VARIABLE = 3;
+  final public static int NUM_DESCENDANT_CONSTANT = 4;
+
+  private double numDescendant = 0;
+  private double numDescendantOperator = 0;
+  private double numDescendantTerminal = 0;
+  private double numDescendantVariable = 0;
+  private double numDescendantConstant = 0;
 
   public Statistic(TreeNode ofNode) {
 //    log.info("Setting up statistics of node: {}", ofNode);
@@ -24,8 +35,13 @@ public class Statistic {
 
   public void onChange() {
     IDataNode dataNode = linkedTreeNode.getDataNode();
-    if (dataNode.getClass() == Operator.class) {
-
+    if (dataNode.getClass() == Variable.class || dataNode.getClass() == Constant.class) {
+      numDescendant = 0;
+      numDescendantOperator = 0;
+      numDescendantTerminal = 0;
+      numDescendantVariable = 0;
+      numDescendantConstant = 0;
+    } else if (dataNode.getClass() == Operator.class) {
       int directOpChildren = 0;
       int directConstChildren = 0;
       int directVarChildren = 0;
@@ -64,7 +80,6 @@ public class Statistic {
       numDescendantTerminal =
           leftStats.getNumDescendantTerminal() + rightStats.getNumDescendantTerminal()
               + directConstChildren + directVarChildren;
-
     }
 
     if (linkedTreeNode.getParent() != null) {
@@ -72,15 +87,5 @@ public class Statistic {
     }
   }
 
-  final public static int NUM_DESCENDANT = 0;
-  final public static int NUM_DESCENDANT_OPERATOR = 1;
-  final public static int NUM_DESCENDANT_TERMINAL = 2;
-  final public static int NUM_DESCENDANT_VARIABLE = 3;
-  final public static int NUM_DESCENDANT_CONSTANT = 4;
 
-  private double numDescendant = 0;
-  private double numDescendantOperator = 0;
-  private double numDescendantTerminal = 0;
-  private double numDescendantVariable = 0;
-  private double numDescendantConstant = 0;
 }
