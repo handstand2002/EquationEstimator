@@ -28,7 +28,6 @@ public class Operator implements IDataNode {
 
   @Override
   public IDataNode clone() {
-    // TODO: finish this
     return new Operator(opChar);
   }
 
@@ -48,6 +47,19 @@ public class Operator implements IDataNode {
         return x * y;
       default:
         log.error("Op Char invalid in node {}", this);
+        return 0;
+    }
+  }
+
+  public double noEffectValue() {
+    switch (this.opChar) {
+      case PLUS:
+      case MINUS:
+        return 0;
+      case DIVIDE:
+      case MULTIPLY:
+        return 1;
+      default:
         return 0;
     }
   }

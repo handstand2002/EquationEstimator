@@ -2,6 +2,7 @@ package org.brokencircuits.equationestimator.domain;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Optional;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.brokencircuits.equationestimator.domain.node.Constant;
@@ -20,7 +21,7 @@ public class StatisticTest {
 
     Constant constant = new Constant(3);
     Variable variable = new Variable();
-    variable.setValue(4);
+    variable.setValue(Optional.of(4D));
     Operator operator = new Operator(Operator.PLUS);
     TreeNode leftChild = new TreeNode(eq, constant);
     TreeNode rightChild = new TreeNode(eq, variable);
@@ -50,9 +51,9 @@ public class StatisticTest {
 
     Operator operator2 = new Operator(Operator.MINUS);
     Variable variable = new Variable();
-    variable.setValue(4);
+    variable.setValue(Optional.of(4D));
     Variable variable1 = new Variable();
-    variable.setValue(3);
+    variable.setValue(Optional.of(3D));
     TreeNode leftSubChild = new TreeNode(eq, variable);
     TreeNode rightSubChild = new TreeNode(eq, variable1);
 

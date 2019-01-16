@@ -62,7 +62,24 @@ public class TreeNode {
 
   public double eval() {
     if (dataNode.getClass() == Operator.class) {
-      return ((Operator) dataNode).operation(leftChild.eval(), rightChild.eval());
+      // Variables may not exist, so we need to check if they do first, and if they don't, use a value
+      // that won't affect the equation
+      Operator opNode = (Operator) dataNode;
+      double leftChildValue;
+      if (leftChild.dataNode.getClass() == Variable.class
+          && !((Variable) leftChild.dataNode).getValue().isPresent()) {
+        leftChildValue = opNode.noEffectValue();
+      } else {
+        leftChildValue = leftChild.eval();
+      }
+      double rightChildValue;
+      if (rightChild.dataNode.getClass() == Variable.class
+          && !((Variable) rightChild.dataNode).getValue().isPresent()) {
+        rightChildValue = opNode.noEffectValue();
+      } else {
+        rightChildValue = rightChild.eval();
+      }
+      return opNode.operation(leftChildValue, rightChildValue);
     } else if (dataNode.getClass() == Variable.class) {
       return ((Variable) dataNode).eval();
     } else if (dataNode.getClass() == Constant.class) {
@@ -79,7 +96,7 @@ public class TreeNode {
 
   public void simplify() {
     if (dataNode.getClass() == Operator.class) {
-      if (statistics.getNumDescendantVariable() == 0) {
+      if ((statistics.getNumDescendantVariable() == 0)) {
 
         this.dataNode = new Constant(this.eval());
         this.container.removeNodeSubtreeFromList(this.leftChild);

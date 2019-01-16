@@ -6,9 +6,11 @@ import static org.brokencircuits.equationestimator.util.Chance.randConstant;
 
 import com.google.common.collect.Lists;
 import java.util.List;
+import java.util.Optional;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.brokencircuits.equationestimator.dataset.Dataset;
 import org.brokencircuits.equationestimator.domain.node.Constant;
 import org.brokencircuits.equationestimator.domain.node.IDataNode;
 import org.brokencircuits.equationestimator.domain.node.Operator;
@@ -22,9 +24,10 @@ public class Equation {
   private boolean rootIsSet = false;
   @Getter
   private List<TreeNode> nodeList = Lists.newArrayList();
+  private static Dataset dataset = Dataset.getInstance();
 
   /* ****************** Static Functions ****************** */
-  static public Equation generateRandom(int avgNumOperators) {
+  static public Equation generateRandom(int avgNumOperators) throws IllegalStateException {
 
     Equation newEq = new Equation();
     TreeNode rootNode = Equation.generateRandom(avgNumOperators, 0, newEq);
@@ -33,7 +36,7 @@ public class Equation {
   }
 
   static public TreeNode generateRandom(final int avgOpNodesDesired, int currentDepth,
-      Equation container) {
+      Equation container) throws IllegalStateException {
 
     IDataNode newDataNode;
     TreeNode newTreeNode;
@@ -44,9 +47,14 @@ public class Equation {
       newTreeNode = new TreeNode(container, newDataNode, leftChild, rightChild);
     } else {
       if (addVariableNode()) {
-        newDataNode = new Variable();
-        ((Variable) newDataNode).setValue(randConstant());
-        // TODO: Make any new variables retrieve variables from predefined pool
+        Optional<Variable> chosen = dataset.getRandom();
+        if (chosen.isPresent()) {
+          newDataNode = chosen.get();
+        } else {
+          log.error("Cannot add variable");
+          throw new IllegalStateException(
+              "Unable to generate tree node as there are no variables to use");
+        }
       } else {
         newDataNode = new Constant((double) randConstant());
       }

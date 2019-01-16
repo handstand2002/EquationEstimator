@@ -16,7 +16,6 @@ public class Constant implements IDataTerminal {
 
   @Override
   public IDataNode clone() {
-    // TODO: Finish this
-    return null;
+    return new Constant(this.value);
   }
 }

@@ -1,6 +1,12 @@
 package org.brokencircuits.equationestimator.dataset;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.Getter;
@@ -40,6 +46,62 @@ public class Dataset {
     }
   }
 
+  public void loadCsv(File inputFile) throws IOException {
+    BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+
+    String line;
+    boolean isFirstLine = true;
+    List<String> headerFields = null;
+    int dataLineNumber = 1;   // start on dataset ID 1
+    while ((line = reader.readLine()) != null) {
+      // -1 limit requires the split function to include all fields, even if they're empty
+      List<String> lineFields = Lists.newArrayList(line.split(",", -1));
+      lineFields.replaceAll(String::trim);
+
+      if (isFirstLine) {
+        headerFields = lineFields;
+        isFirstLine = false;
+      } else {
+        this.setCurrentSetId(dataLineNumber);
+
+        for (int i = 0; i < lineFields.size(); i++) {
+          Variable variable = new Variable();
+
+          try {
+            variable.setValue(Optional.of(Double.parseDouble(lineFields.get(i))));
+          } catch (NumberFormatException e) {
+
+          }
+          variable.setName(headerFields.get(i));
+
+          this.addVariable(variable);
+        }
+
+        dataLineNumber++;
+      }
+    }
+  }
+
+  public String setContents(int id) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("Set ID ").append(id).append("\n");
+    Map<Integer, Variable> set = this.getSet(id);
+    for (Variable var : set.values()) {
+      sb.append("\t").append(var.toString()).append("\n");
+    }
+    return sb.toString();
+  }
+
+  public String allSetContents() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("* Contents of all datasets *******************************\n");
+    for (Integer setId : variableMapSets.keySet()) {
+      sb.append(setContents(setId)).append("\n");
+    }
+    sb.append("**********************************************************\n");
+    return sb.toString();
+  }
+
   public int addVariable(Variable add) {
     int thisId = ++lastIntegerId;
 
@@ -62,6 +124,7 @@ public class Dataset {
       int chooseId = keyArray[Chance.RAND.nextInt(keyArray.length)];
       return Optional.of(currentVariableMap.get(chooseId));
     } else {
+      log.warn("Cannot retrieve random variable as the variable pool is empty");
       return Optional.empty();
     }
   }

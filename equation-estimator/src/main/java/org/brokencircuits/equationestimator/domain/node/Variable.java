@@ -1,7 +1,7 @@
 package org.brokencircuits.equationestimator.domain.node;
 
+import java.util.Optional;
 import lombok.Data;
-import org.brokencircuits.equationestimator.domain.TreeNode;
 
 @Data
 public class Variable implements IDataTerminal {
@@ -9,8 +9,8 @@ public class Variable implements IDataTerminal {
   static private int lastId;
 
   final private int id;
-  private double value;
-  private TreeNode parent;
+  private Optional<Double> value = Optional.empty();
+  private String name;
 
   public Variable() {
     id = ++lastId;
@@ -18,13 +18,12 @@ public class Variable implements IDataTerminal {
 
   @Override
   public IDataNode clone() {
-    // TODO: Finish this
     return this;
   }
 
   @Override
   public double eval() {
-    return value;
+    return value.get();
   }
 
 

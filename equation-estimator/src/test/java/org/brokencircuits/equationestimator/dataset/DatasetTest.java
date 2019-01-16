@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.List;
+import java.util.Optional;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.util.Lists;
@@ -24,7 +25,7 @@ public class DatasetTest {
   @SneakyThrows
   public void add() {
     Variable expected = new Variable();
-    expected.setValue(3);
+    expected.setValue(Optional.of(3D));
 
     Dataset dataset = Dataset.getInstance();
 
@@ -40,10 +41,10 @@ public class DatasetTest {
   @SneakyThrows
   public void addMuliple() {
     Variable expected = new Variable();
-    expected.setValue(3);
+    expected.setValue(Optional.of(3D));
 
     Variable expected2 = new Variable();
-    expected2.setValue(4);
+    expected2.setValue(Optional.of(4D));
 
     Dataset dataset = Dataset.getInstance();
 
@@ -60,13 +61,13 @@ public class DatasetTest {
   @SneakyThrows
   public void addMulipleGetRandom() {
     Variable expected = new Variable();
-    expected.setValue(3);
+    expected.setValue(Optional.of(3D));
 
     Variable expected2 = new Variable();
-    expected2.setValue(4);
+    expected2.setValue(Optional.of(4D));
 
     Variable expected3 = new Variable();
-    expected3.setValue(5);
+    expected3.setValue(Optional.of(5D));
 
     List<Variable> createdList = Lists.newArrayList(
         expected, expected2, expected3
@@ -90,22 +91,22 @@ public class DatasetTest {
   @SneakyThrows
   public void addSets() {
     Variable expected = new Variable();
-    expected.setValue(3);
+    expected.setValue(Optional.of(3D));
 
     Variable expected2 = new Variable();
-    expected2.setValue(4);
+    expected2.setValue(Optional.of(4D));
 
     Variable expected3 = new Variable();
-    expected3.setValue(5);
+    expected3.setValue(Optional.of(5D));
 
     Variable expected4 = new Variable();
-    expected.setValue(6);
+    expected.setValue(Optional.of(6D));
 
     Variable expected5 = new Variable();
-    expected2.setValue(7);
+    expected2.setValue(Optional.of(7D));
 
     Variable expected6 = new Variable();
-    expected3.setValue(8);
+    expected3.setValue(Optional.of(8D));
 
     Dataset dataset = Dataset.getInstance();
 
