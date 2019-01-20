@@ -68,11 +68,14 @@ public class Equation {
 
   /* *************************** Public Function *************************** */
 
+  public Statistic statistic() {
+    return root.getStatistics();
+  }
+
   public Equation clone() {
     Equation newEq = new Equation();
-    newEq.setRoot(this.root.cloneTree());
-    // TODO: Finish this
-    return null;
+    newEq.setRoot(this.root.clone(newEq));
+    return newEq;
   }
 
   public void removeNodeSubtreeFromList(TreeNode initial) {

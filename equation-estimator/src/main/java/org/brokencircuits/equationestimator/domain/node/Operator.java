@@ -1,10 +1,12 @@
 package org.brokencircuits.equationestimator.domain.node;
 
+import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.brokencircuits.equationestimator.util.Chance;
 
+@EqualsAndHashCode(exclude = "id")
 @ToString
 @Slf4j
 public class Operator implements IDataNode {

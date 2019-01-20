@@ -13,8 +13,8 @@ import org.brokencircuits.equationestimator.domain.node.Operator;
 import org.brokencircuits.equationestimator.domain.node.Variable;
 
 @Slf4j
-@EqualsAndHashCode(exclude = {"leftChild", "rightChild", "parent"})
-@ToString(exclude = {"leftChild", "rightChild", "parent"})
+@EqualsAndHashCode(exclude = {"leftChild", "rightChild", "parent", "id", "container", "statistics"})
+@ToString(exclude = {"leftChild", "rightChild", "parent", "container"})
 public class TreeNode {
 
   private static int lastId = 0;
@@ -112,16 +112,26 @@ public class TreeNode {
     }
   }
 
-  public TreeNode clone(Equation newContainer, TreeNode newParent) {
-    //public TreeNode(Equation container, IDataNode dataNode, TreeNode leftChild, TreeNode rightChild)
-//    IDataNode newDataNode = this.dataNode.clone();
-    // TODO: Finish this
-    return null;
-  }
+  public TreeNode clone(Equation newContainer) {
 
-  public TreeNode cloneTree() {
-    // TODO: Finish this
-    return null;
+    TreeNode leftChildClone = null;
+    TreeNode rightChildClone = null;
+    if (this.leftChild != null && this.rightChild != null) {
+      leftChildClone = this.leftChild.clone(newContainer);
+      rightChildClone = this.rightChild.clone(newContainer);
+    }
+
+    IDataNode newDataNode = this.dataNode.clone();
+    TreeNode clone;
+    if (leftChildClone != null && rightChildClone != null) {
+      clone = new TreeNode(newContainer, newDataNode, leftChildClone, rightChildClone);
+    } else {
+      clone = new TreeNode(newContainer, newDataNode);
+    }
+
+    newContainer.getNodeList().add(clone);
+
+    return clone;
   }
 
   /* ***************************** STATIC FUNCTIONS ***************************** */

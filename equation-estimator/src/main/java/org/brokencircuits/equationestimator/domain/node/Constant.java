@@ -1,9 +1,11 @@
 package org.brokencircuits.equationestimator.domain.node;
 
+import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
 @RequiredArgsConstructor
+@EqualsAndHashCode
 @ToString
 public class Constant implements IDataTerminal {
 
