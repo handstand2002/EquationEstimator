@@ -10,7 +10,7 @@ import org.junit.Test;
 @Slf4j
 public class EvolverTest {
 
-  Evolver evolver = new Evolver();
+  Evolver evolver = Evolver.getInstance();
 
   @Before
   public void setUp() {

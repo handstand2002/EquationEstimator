@@ -161,7 +161,7 @@ public class TreeNode {
   public static String equationReadableVariableNode(TreeNode treeNode, boolean useValue) {
     Variable dataNode = (Variable) treeNode.dataNode;
     if (useValue) {
-      return "V[" + dataNode.eval() + "]";
+      return "(" + dataNode.eval() + ")";
     } else {
       return "VID[" + dataNode.getId() + "]";
     }
@@ -240,6 +240,7 @@ public class TreeNode {
       } else {
         rightChildValue = rightChild.eval();
       }
+      // TODO: Cache result of operations in nodes, retrieve it as result as long as there aren't any variable descendants
       return opNode.operation(leftChildValue, rightChildValue);
     } else if (dataNode.getClass() == Variable.class) {
       return ((Variable) dataNode).eval();

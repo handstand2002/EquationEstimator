@@ -27,6 +27,8 @@ public class Equation {
   private TreeNode root;
   @Getter
   private List<TreeNode> nodeList = Lists.newArrayList();
+  @Setter
+  private Double lastFitness = -1D;
 
   /* ****************** Static Functions ****************** */
   static public String nodeListReadable(List<TreeNode> list) {
@@ -76,12 +78,14 @@ public class Equation {
     return newTreeNode;
   }
 
-  /* *************************** Public Function *************************** */
+  public Double getLastFitness() {
+    if (lastFitness < 0) {
+      Generation.evaluateEquation(this);
+    }
+    return lastFitness;
+  }
 
-//  @Override
-//  public String toString() {
-//    return this.equationTree();
-//  }
+  /* *************************** Public Function *************************** */
 
   public Statistic statistic() {
     return root.getStatistics();
@@ -98,10 +102,7 @@ public class Equation {
         initial.getId(), replacement.getId());
 
     if (nodeList.contains(initial)) {
-//      log.info("Replacing node \n\t\t{}\n\t\t\tFind: {}\n\t\t\tReplace: {}", this, initial,
-//          replacement);
       removeNodeSubtreeFromEquation(initial);
-//      initial.replaceNode(replacement);
       TreeNode.swapNodes(initial, replacement);
       addNodeSubtreeToEquation(replacement);
     }
@@ -133,7 +134,12 @@ public class Equation {
   }
 
   public String equationReadable(boolean replaceVariablesWithValues) {
-    return root.equationReadable(replaceVariablesWithValues);
+    StringBuilder sb = new StringBuilder();
+    sb.append(root.equationReadable(replaceVariablesWithValues));
+    if (replaceVariablesWithValues) {
+      sb.append(" = ").append(this.eval());
+    }
+    return sb.toString();
   }
 
   public String equationTree() {

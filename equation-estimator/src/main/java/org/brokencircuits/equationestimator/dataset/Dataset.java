@@ -98,6 +98,15 @@ public class Dataset {
     this.assignValuesToVariables();
   }
 
+  public Double getCurrentSetSolution() {
+    Map<String, Double> currentSet = getSet(currentSetId);
+    if (!currentSet.containsKey(solutionName)) {
+      log.error("current dataset {} does not contain solution {}", currentSetId, solutionName);
+      return null;
+    }
+    return currentSet.get(solutionName);
+  }
+
   private void assignValuesToVariables() {
     Map<String, Double> currentSet = getSet(currentSetId);
     for (String name : variables.keySet()) {
@@ -123,7 +132,7 @@ public class Dataset {
     getSet(currentSetId).put(varName, varValue);
   }
 
-  public String setContents(int id) {
+  public String getSetContents(int id) {
     StringBuilder sb = new StringBuilder();
     sb.append("Set ID ").append(id).append("\n");
     Map<String, Double> set = this.getSet(id);
@@ -138,7 +147,7 @@ public class Dataset {
     return sb.toString();
   }
 
-  public String allSetContents() {
+  public String getAllSetContents() {
     StringBuilder sb = new StringBuilder();
     sb.append("* Contents of all datasets *******************************\n");
     sb.append("Variables:\n");
@@ -148,7 +157,7 @@ public class Dataset {
     sb.append("***********************\n\n");
 
     for (Integer setId : valueSets.keySet()) {
-      sb.append(setContents(setId)).append("\n");
+      sb.append(getSetContents(setId)).append("\n");
     }
     sb.append("**********************************************************\n");
     return sb.toString();
@@ -161,5 +170,9 @@ public class Dataset {
       return Optional.of(varSet.get(Chance.RAND.nextInt(varSet.size())));
     }
     return Optional.empty();
+  }
+
+  public List<Integer> getIdList() {
+    return Lists.newArrayList(valueSets.keySet());
   }
 }

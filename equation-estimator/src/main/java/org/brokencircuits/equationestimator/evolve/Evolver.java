@@ -12,6 +12,18 @@ import org.springframework.stereotype.Component;
 @Component
 public class Evolver {
 
+  private static Evolver instance = null;
+
+  private Evolver() {
+  }
+
+  public static Evolver getInstance() {
+    if (instance == null) {
+      instance = new Evolver();
+    }
+    return instance;
+  }
+
   public List<Equation> nodeExchange(Equation eq1, Equation eq2) {
 
     Equation childEq1 = eq1.clone();

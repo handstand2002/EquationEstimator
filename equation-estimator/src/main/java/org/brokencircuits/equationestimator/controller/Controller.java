@@ -1,12 +1,14 @@
 package org.brokencircuits.equationestimator.controller;
 
 
+import com.scottlogic.util.SortedList;
 import java.io.File;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.brokencircuits.equationestimator.dataset.Dataset;
-import org.brokencircuits.equationestimator.evolve.Evolver;
+import org.brokencircuits.equationestimator.domain.Equation;
+import org.brokencircuits.equationestimator.domain.Generation;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -14,31 +16,48 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class Controller implements Runnable {
 
-  final public static int POP_SIZE = 100;
-  final public static int INIT_OP_NODE_COUNT = 100;
-  final Evolver evolver;
-  final Dataset dataset;
+  final public static int POP_SIZE = 10;
+  final public static int INIT_OP_NODE_COUNT = 5;
+  final public static double ELITISM = 0.1;    // percent of elites to retain
+  //  final private Evolver evolver = Evolver.getInstance();
+  final private Dataset dataset = Dataset.getInstance();
 
   @Override
   public void run() {
     try {
       dataset.setSolutionName("y");
       dataset.loadCsv(new File("data.csv"));
-      log.info("\n{}", dataset.allSetContents());
     } catch (IOException e) {
       log.error("Unable to read csv due to error: ", e);
     }
 
-//    int setId = dataset.getCurrentSetId();
-//    log.info("Set ID: {}", setId);
-//    Optional<Variable> solution = dataset.getSolution();
-//    log.info("solution: {}", solution);
-//    Optional<Variable> var = dataset.getById(1);
+    Generation initialGen = new Generation();
+    initialGen.generateRandomPop();
+    SortedList<Equation> eqList = initialGen.equationList();
+    for (Equation eq : eqList) {
+      log.info("Eq Fitness: {}", eq.getLastFitness());
+    }
+    log.info("");
 
-//    Equation eq1 = Equation.generateRandom(10);
-//    Equation eq2 = Equation.generateRandom(10);
-//
-//    evolver.nodeExchange(eq1, eq2);
+    Generation newGen = initialGen.generateNext();
+    newGen.equationList()
+        .forEach(equation -> log.info("Eq fitness: {}", equation.getLastFitness()));
+    log.info("");
+
+    newGen = newGen.generateNext();
+    newGen.equationList()
+        .forEach(equation -> log.info("Eq fitness: {}", equation.getLastFitness()));
+    log.info("");
+
+    newGen = newGen.generateNext();
+    newGen.equationList()
+        .forEach(equation -> log.info("Eq fitness: {}", equation.getLastFitness()));
+    log.info("");
+
+    newGen = newGen.generateNext();
+    newGen.equationList()
+        .forEach(equation -> log.info("Eq fitness: {}", equation.getLastFitness()));
+    log.info("");
 
   }
 
