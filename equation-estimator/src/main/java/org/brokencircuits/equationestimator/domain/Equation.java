@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.brokencircuits.equationestimator.dataset.Dataset;
 import org.brokencircuits.equationestimator.domain.node.Constant;
@@ -20,13 +21,22 @@ import org.brokencircuits.equationestimator.domain.node.Variable;
 @Slf4j
 public class Equation {
 
+  private static Dataset dataset = Dataset.getInstance();
+  @Getter
+  @Setter
   private TreeNode root;
-  private boolean rootIsSet = false;
   @Getter
   private List<TreeNode> nodeList = Lists.newArrayList();
-  private static Dataset dataset = Dataset.getInstance();
 
   /* ****************** Static Functions ****************** */
+  static public String nodeListReadable(List<TreeNode> list) {
+    StringBuilder sb = new StringBuilder();
+    for (TreeNode node : list) {
+      sb.append(node.toString()).append("\n");
+    }
+    return sb.toString();
+  }
+
   static public Equation generateRandom(int avgNumOperators) throws IllegalStateException {
 
     Equation newEq = new Equation();
@@ -68,6 +78,11 @@ public class Equation {
 
   /* *************************** Public Function *************************** */
 
+//  @Override
+//  public String toString() {
+//    return this.equationTree();
+//  }
+
   public Statistic statistic() {
     return root.getStatistics();
   }
@@ -78,13 +93,38 @@ public class Equation {
     return newEq;
   }
 
-  public void removeNodeSubtreeFromList(TreeNode initial) {
-    nodeList.remove(initial);
+  public void replaceNode(TreeNode initial, TreeNode replacement) {
+    log.info("Equation to replace node in: {}.\n\tReplacing node {} with node {}", this,
+        initial.getId(), replacement.getId());
+
+    if (nodeList.contains(initial)) {
+//      log.info("Replacing node \n\t\t{}\n\t\t\tFind: {}\n\t\t\tReplace: {}", this, initial,
+//          replacement);
+      removeNodeSubtreeFromEquation(initial);
+//      initial.replaceNode(replacement);
+      TreeNode.swapNodes(initial, replacement);
+      addNodeSubtreeToEquation(replacement);
+    }
+  }
+
+  public void addNodeSubtreeToEquation(TreeNode initial) {
+    nodeList.add(initial);
+    initial.setContainer(this);
     if (initial.getLeftChild() != null) {
-      removeNodeSubtreeFromList(initial.getLeftChild());
+      addNodeSubtreeToEquation(initial.getLeftChild());
     }
     if (initial.getRightChild() != null) {
-      removeNodeSubtreeFromList(initial.getRightChild());
+      addNodeSubtreeToEquation(initial.getRightChild());
+    }
+  }
+
+  public void removeNodeSubtreeFromEquation(TreeNode initial) {
+    nodeList.remove(initial);
+    if (initial.getLeftChild() != null) {
+      removeNodeSubtreeFromEquation(initial.getLeftChild());
+    }
+    if (initial.getRightChild() != null) {
+      removeNodeSubtreeFromEquation(initial.getRightChild());
     }
   }
 
@@ -98,20 +138,11 @@ public class Equation {
 
   public String equationTree() {
     List<String> treeNodeStrings = TreeNode.equationTreeNode(root);
-    return String.join("\n", treeNodeStrings);
+    return TreeNode.treeStringsToString(treeNodeStrings);
   }
 
   public void simplify() {
     root.simplify();
   }
 
-  public void setRoot(TreeNode root) {
-    if (!rootIsSet) {
-      this.root = root;
-      rootIsSet = true;
-    } else {
-      log.error("Cannot re-set root node of equation: {}", this);
-    }
-
-  }
 }

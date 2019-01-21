@@ -19,12 +19,14 @@ import org.brokencircuits.equationestimator.util.Chance;
 public class Dataset {
 
   private static Dataset instance = null;
-
-  private Map<Integer, Map<Integer, Variable>> variableMapSets = Maps.newHashMap();
-  @Getter
   @Setter
+  private String solutionName = "";
+
+  private Map<Integer, Map<String, Double>> valueSets = Maps.newHashMap();
+  private Map<String, Variable> variables = Maps.newHashMap();
+
+  @Getter
   private int currentSetId = 0;
-  private int lastIntegerId = 0;
 
   private Dataset() {
   }
@@ -36,12 +38,17 @@ public class Dataset {
     return instance;
   }
 
-  private Map<Integer, Variable> getSet(int id) {
-    if (variableMapSets.containsKey(id)) {
-      return variableMapSets.get(id);
+  public void setCurrentSetId(int id) {
+    this.currentSetId = id;
+    assignValuesToVariables();
+  }
+
+  private Map<String, Double> getSet(int id) {
+    if (valueSets.containsKey(id)) {
+      return valueSets.get(id);
     } else {
-      Map<Integer, Variable> newSet = Maps.newHashMap();
-      variableMapSets.put(id, newSet);
+      Map<String, Double> newSet = Maps.newHashMap();
+      valueSets.put(id, newSet);
       return newSet;
     }
   }
@@ -60,34 +67,73 @@ public class Dataset {
 
       if (isFirstLine) {
         headerFields = lineFields;
+        for (String headerField : headerFields) {
+          if (headerField.equals(solutionName)) {
+            continue;
+          }
+          Variable var = new Variable();
+          var.setName(headerField);
+          variables.put(var.getName(), var);
+        }
         isFirstLine = false;
       } else {
         this.setCurrentSetId(dataLineNumber);
 
         for (int i = 0; i < lineFields.size(); i++) {
-          Variable variable = new Variable();
-
+          String varName = headerFields.get(i);
+          Double varValue = 0D;
           try {
-            variable.setValue(Optional.of(Double.parseDouble(lineFields.get(i))));
-          } catch (NumberFormatException e) {
+            varValue = Double.parseDouble(lineFields.get(i));
+          } catch (NumberFormatException expected) {
 
           }
-          variable.setName(headerFields.get(i));
 
-          this.addVariable(variable);
+          this.addValue(varName, varValue);
         }
 
         dataLineNumber++;
       }
     }
+    this.setCurrentSetId(1);
+    this.assignValuesToVariables();
+  }
+
+  private void assignValuesToVariables() {
+    Map<String, Double> currentSet = getSet(currentSetId);
+    for (String name : variables.keySet()) {
+
+      Variable var = variables.get(name);
+      if (currentSet.containsKey(name)) {
+        var.setValue(Optional.of(currentSet.get(name)));
+      } else {
+        var.setValue(Optional.empty());
+      }
+
+    }
+  }
+
+  public Optional<Variable> getVariableByName(String varName) {
+    if (variables.containsKey(varName)) {
+      return Optional.of(variables.get(varName));
+    }
+    return Optional.empty();
+  }
+
+  private void addValue(String varName, Double varValue) {
+    getSet(currentSetId).put(varName, varValue);
   }
 
   public String setContents(int id) {
     StringBuilder sb = new StringBuilder();
     sb.append("Set ID ").append(id).append("\n");
-    Map<Integer, Variable> set = this.getSet(id);
-    for (Variable var : set.values()) {
-      sb.append("\t").append(var.toString()).append("\n");
+    Map<String, Double> set = this.getSet(id);
+    for (String key : set.keySet()) {
+      String solutionText = "";
+      if (key.equals(solutionName)) {
+        solutionText = " - Solution Value";
+      }
+      sb.append("\t").append(key).append(": ").append(set.get(key)).append(solutionText)
+          .append("\n");
     }
     return sb.toString();
   }
@@ -95,42 +141,25 @@ public class Dataset {
   public String allSetContents() {
     StringBuilder sb = new StringBuilder();
     sb.append("* Contents of all datasets *******************************\n");
-    for (Integer setId : variableMapSets.keySet()) {
+    sb.append("Variables:\n");
+    for (Variable var : variables.values()) {
+      sb.append("\t").append(var).append("\n");
+    }
+    sb.append("***********************\n\n");
+
+    for (Integer setId : valueSets.keySet()) {
       sb.append(setContents(setId)).append("\n");
     }
     sb.append("**********************************************************\n");
     return sb.toString();
   }
 
-  public int addVariable(Variable add) {
-    int thisId = ++lastIntegerId;
+  public Optional<Variable> getRandom() {
+    List<Variable> varSet = Lists.newArrayList(variables.values());
 
-    getSet(currentSetId).put(thisId, add);
-    return thisId;
-  }
-
-  public Optional<Variable> getById(int id) {
-    Map<Integer, Variable> currentVariableMap = getSet(currentSetId);
-    if (currentVariableMap.containsKey(id)) {
-      return Optional.of(currentVariableMap.get(id));
+    if (!variables.isEmpty()) {
+      return Optional.of(varSet.get(Chance.RAND.nextInt(varSet.size())));
     }
     return Optional.empty();
-  }
-
-  public Optional<Variable> getRandom() {
-    Map<Integer, Variable> currentVariableMap = getSet(currentSetId);
-    if (!currentVariableMap.isEmpty()) {
-      Integer[] keyArray = currentVariableMap.keySet().toArray(new Integer[0]);
-      int chooseId = keyArray[Chance.RAND.nextInt(keyArray.length)];
-      return Optional.of(currentVariableMap.get(chooseId));
-    } else {
-      log.warn("Cannot retrieve random variable as the variable pool is empty");
-      return Optional.empty();
-    }
-  }
-
-  public void clearSet() {
-    Map<Integer, Variable> currentVariableMap = getSet(currentSetId);
-    currentVariableMap.clear();
   }
 }

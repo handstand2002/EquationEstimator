@@ -6,7 +6,6 @@ import static org.junit.Assert.assertTrue;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.brokencircuits.equationestimator.dataset.Dataset;
-import org.brokencircuits.equationestimator.domain.node.Variable;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -16,7 +15,7 @@ public class EquationTest {
   @Before
   public void setUp() {
     Dataset dataset = Dataset.getInstance();
-    dataset.addVariable(new Variable());
+//    dataset.addVariable(new Variable());
   }
 
   @Test

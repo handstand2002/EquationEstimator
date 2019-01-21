@@ -1,17 +1,31 @@
 package org.brokencircuits.equationestimator.evolve;
 
-import javafx.util.Pair;
+import com.google.common.collect.Lists;
+import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.brokencircuits.equationestimator.domain.Equation;
+import org.brokencircuits.equationestimator.domain.TreeNode;
+import org.brokencircuits.equationestimator.util.Chance;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 public class Evolver {
 
-  public Pair<Equation, Equation> nodeExchange(Equation eq1, Equation eq2) {
+  public List<Equation> nodeExchange(Equation eq1, Equation eq2) {
 
-//    Equation eqChild1 = new Equation(eq1);
+    Equation childEq1 = eq1.clone();
+    Equation childEq2 = eq2.clone();
 
-    return null;
+    List<TreeNode> childNodeList1 = childEq1.getNodeList();
+    List<TreeNode> childNodeList2 = childEq2.getNodeList();
+
+    TreeNode randomChildNode1 = childNodeList1.get(Chance.RAND.nextInt(childNodeList1.size()));
+    TreeNode randomChildNode2 = childNodeList2.get(Chance.RAND.nextInt(childNodeList2.size()));
+
+    TreeNode.swapNodes(randomChildNode1, randomChildNode2);
+
+    return Lists.newArrayList(childEq1, childEq2);
   }
 
 

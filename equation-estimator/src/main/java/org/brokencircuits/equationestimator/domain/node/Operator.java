@@ -28,6 +28,26 @@ public class Operator implements IDataNode {
     this.opChar = opChar;
   }
 
+  public static OpChar getOpChar(int i) {
+    switch (Math.floorMod(i, 4)) {
+      case 0:
+        return OpChar.PLUS;
+      case 1:
+        return OpChar.MINUS;
+      case 2:
+        return OpChar.MULTIPLY;
+      case 3:
+        return OpChar.DIVIDE;
+      default:
+        log.error("Something went horribly wrong retrieving opChar from int");
+        return null;
+    }
+  }
+
+  public static OpChar randOpChar() {
+    return getOpChar(Math.floorMod(Chance.RAND.nextInt(), 4));
+  }
+
   @Override
   public IDataNode clone() {
     return new Operator(opChar);
@@ -64,26 +84,6 @@ public class Operator implements IDataNode {
       default:
         return 0;
     }
-  }
-
-  public static OpChar getOpChar(int i) {
-    switch (Math.floorMod(i, 4)) {
-      case 0:
-        return OpChar.PLUS;
-      case 1:
-        return OpChar.MINUS;
-      case 2:
-        return OpChar.MULTIPLY;
-      case 3:
-        return OpChar.DIVIDE;
-      default:
-        log.error("Something went horribly wrong retrieving opChar from int");
-        return null;
-    }
-  }
-
-  public static OpChar randOpChar() {
-    return getOpChar(Math.floorMod(Chance.RAND.nextInt(), 4));
   }
 
   public String getChar() {

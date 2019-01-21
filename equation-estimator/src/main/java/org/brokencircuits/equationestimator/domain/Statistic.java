@@ -13,13 +13,12 @@ import org.brokencircuits.equationestimator.domain.node.Variable;
 @Slf4j
 public class Statistic {
 
-  final private TreeNode linkedTreeNode;
   final public static int NUM_DESCENDANT = 0;
   final public static int NUM_DESCENDANT_OPERATOR = 1;
   final public static int NUM_DESCENDANT_TERMINAL = 2;
   final public static int NUM_DESCENDANT_VARIABLE = 3;
   final public static int NUM_DESCENDANT_CONSTANT = 4;
-
+  final private TreeNode linkedTreeNode;
   private double numDescendant = 0;
   private double numDescendantOperator = 0;
   private double numDescendantTerminal = 0;
