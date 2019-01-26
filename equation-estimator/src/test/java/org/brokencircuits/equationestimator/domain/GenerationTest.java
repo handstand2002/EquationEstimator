@@ -24,7 +24,7 @@ public class GenerationTest {
 //    initialGen.generateRandomPop();
 //    SortedList<Equation> eqList = initialGen.equationList();
 //    for (Equation eq : eqList) {
-//      log.info("Eq Fitness: {}", Generation.evaluateEquation(eq));
+//      log.info("Eq Fitness: {}", Generation.equationFitness(eq));
 //    }
 //
 //    Integer[] countArray = new Integer[POP_SIZE];

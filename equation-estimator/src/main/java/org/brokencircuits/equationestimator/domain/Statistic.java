@@ -19,11 +19,11 @@ public class Statistic {
   final public static int NUM_DESCENDANT_VARIABLE = 3;
   final public static int NUM_DESCENDANT_CONSTANT = 4;
   final private TreeNode linkedTreeNode;
-  private double numDescendant = 0;
-  private double numDescendantOperator = 0;
-  private double numDescendantTerminal = 0;
-  private double numDescendantVariable = 0;
-  private double numDescendantConstant = 0;
+  private long numDescendant = 0;
+  private long numDescendantOperator = 0;
+  private long numDescendantTerminal = 0;
+  private long numDescendantVariable = 0;
+  private long numDescendantConstant = 0;
 
   public Statistic(TreeNode ofNode) {
 //    log.info("Setting up statistics of node: {}", ofNode);

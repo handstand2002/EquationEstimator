@@ -17,13 +17,12 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class Generation {
 
-  private final Double MAX_WORST = Math.sqrt(Double.MAX_VALUE) - 1;
   private final Dataset dataset = Dataset.getInstance();
   private final Evolver evolver = Evolver.getInstance();
   private SortedList<Equation> equationList = new SortedList<>(
       Comparator.comparingDouble(Equation::getLastFitness));
 
-  public static double evaluateEquation(Equation eq) {
+  public static double equationFitness(Equation eq) {
     Dataset dataset = Dataset.getInstance();
     List<Integer> datasetIdList = dataset.getIdList();
 
@@ -81,7 +80,9 @@ public class Generation {
       Equation selectTwo = this.select();
 
       List<Equation> childList = evolver.nodeExchange(selectOne, selectTwo);
-      // TODO: add mutation
+      childList.forEach(evolver::equationMutate);   // mutate each child
+      // TODO: maybe only mutate some children?
+
       newGen.addEquation(childList.get(0));
       if (newGen.equationList.size() < Controller.POP_SIZE) {
         newGen.addEquation(childList.get(1));

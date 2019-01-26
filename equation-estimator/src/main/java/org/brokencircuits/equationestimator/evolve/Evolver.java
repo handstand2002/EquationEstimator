@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.brokencircuits.equationestimator.domain.Equation;
+import org.brokencircuits.equationestimator.domain.Statistic;
 import org.brokencircuits.equationestimator.domain.TreeNode;
 import org.brokencircuits.equationestimator.util.Chance;
 import org.springframework.stereotype.Component;
@@ -24,6 +25,19 @@ public class Evolver {
     return instance;
   }
 
+  public void equationMutate(Equation eq) {
+    List<TreeNode> nodeList = eq.getNodeList();
+    int randomIndex = Chance.RAND.nextInt(nodeList.size());
+    TreeNode randomSelectedNode = nodeList.get(randomIndex);
+
+    Statistic selectedStatistic = randomSelectedNode.getStatistics();
+
+    TreeNode randomGeneratedNode = Equation.generateRandom(
+        (int) selectedStatistic.getNumDescendantOperator(), 0, null);
+
+    TreeNode.swapNodes(randomSelectedNode, randomGeneratedNode);
+  }
+
   public List<Equation> nodeExchange(Equation eq1, Equation eq2) {
 
     Equation childEq1 = eq1.clone();
@@ -36,9 +50,6 @@ public class Evolver {
     TreeNode randomChildNode2 = childNodeList2.get(Chance.RAND.nextInt(childNodeList2.size()));
 
     TreeNode.swapNodes(randomChildNode1, randomChildNode2);
-
     return Lists.newArrayList(childEq1, childEq2);
   }
-
-
 }

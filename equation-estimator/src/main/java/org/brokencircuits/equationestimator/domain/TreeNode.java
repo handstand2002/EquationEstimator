@@ -38,25 +38,6 @@ public class TreeNode {
   @Getter
   private Statistic statistics;
 
-  private TreeNode(int id, Equation container, IDataNode dataNode, TreeNode leftChild,
-      TreeNode rightChild) {
-    this.dataNode = dataNode;
-    this.leftChild = leftChild;
-    this.rightChild = rightChild;
-    this.leftChild.setParent(this, WhichChild.LEFT);
-    this.rightChild.setParent(this, WhichChild.RIGHT);
-    this.container = container;
-    statistics = new Statistic(this);
-    this.id = id;
-  }
-
-  private TreeNode(int id, Equation container, IDataNode dataNode) {
-    this.container = container;
-    this.dataNode = dataNode;
-    statistics = new Statistic(this);
-    this.id = id;
-  }
-
   public TreeNode(Equation container, IDataNode dataNode, TreeNode leftChild, TreeNode rightChild) {
     this.dataNode = dataNode;
     this.leftChild = leftChild;
@@ -84,16 +65,30 @@ public class TreeNode {
     TreeNode initialParent = initial.parent;
     TreeNode replaceParent = replacement.parent;
 
+    // set properties of replacement node
     if (initialParent != null) {
+      // initial node is not root
       initialParent.setChild(replacement, initialWhichChild);
+      replacement.setParent(initialParent, initialWhichChild);
     } else {
-      initialContainer.setRoot(replacement);
+      // initial node is root, set replacement node to root
+      if (initialContainer != null) {
+        initialContainer.setRoot(replacement);
+      }
+      replacement.setParent(null, null);
     }
 
+    // set properties of initial node
     if (replaceParent != null) {
+      // initial node is not root
       replaceParent.setChild(initial, replaceWhichChild);
+      initial.setParent(replaceParent, replaceWhichChild);
     } else {
-      replaceContainer.setRoot(initial);
+      // replace node is root, set initial node to root
+      if (replaceContainer != null) {
+        replaceContainer.setRoot(initial);
+      }
+      initial.setParent(null, null);
     }
 
     initial.whichChild = replaceWhichChild;
@@ -286,9 +281,9 @@ public class TreeNode {
     IDataNode newDataNode = this.dataNode.clone();
     TreeNode clone;
     if (leftChildClone != null && rightChildClone != null) {
-      clone = new TreeNode(this.id, newContainer, newDataNode, leftChildClone, rightChildClone);
+      clone = new TreeNode(newContainer, newDataNode, leftChildClone, rightChildClone);
     } else {
-      clone = new TreeNode(this.id, newContainer, newDataNode);
+      clone = new TreeNode(newContainer, newDataNode);
     }
 
     newContainer.getNodeList().add(clone);

@@ -73,14 +73,16 @@ public class Equation {
       newTreeNode = new TreeNode(container, newDataNode);
     }
 
-    container.nodeList.add(newTreeNode);
+    if (container != null) {
+      container.nodeList.add(newTreeNode);
+    }
 
     return newTreeNode;
   }
 
   public Double getLastFitness() {
     if (lastFitness < 0) {
-      Generation.evaluateEquation(this);
+      Generation.equationFitness(this);
     }
     return lastFitness;
   }

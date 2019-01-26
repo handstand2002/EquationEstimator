@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.brokencircuits.equationestimator.dataset.Dataset;
 import org.brokencircuits.equationestimator.domain.Equation;
 import org.brokencircuits.equationestimator.domain.Generation;
+import org.brokencircuits.equationestimator.evolve.Evolver;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -18,8 +19,8 @@ public class Controller implements Runnable {
 
   final public static int POP_SIZE = 10;
   final public static int INIT_OP_NODE_COUNT = 5;
-  final public static double ELITISM = 0.1;    // percent of elites to retain
-  //  final private Evolver evolver = Evolver.getInstance();
+  final public static double ELITISM = 0.0;    // percent of elites to retain
+  final private Evolver evolver = Evolver.getInstance();
   final private Dataset dataset = Dataset.getInstance();
 
   @Override
@@ -40,21 +41,6 @@ public class Controller implements Runnable {
     log.info("");
 
     Generation newGen = initialGen.generateNext();
-    newGen.equationList()
-        .forEach(equation -> log.info("Eq fitness: {}", equation.getLastFitness()));
-    log.info("");
-
-    newGen = newGen.generateNext();
-    newGen.equationList()
-        .forEach(equation -> log.info("Eq fitness: {}", equation.getLastFitness()));
-    log.info("");
-
-    newGen = newGen.generateNext();
-    newGen.equationList()
-        .forEach(equation -> log.info("Eq fitness: {}", equation.getLastFitness()));
-    log.info("");
-
-    newGen = newGen.generateNext();
     newGen.equationList()
         .forEach(equation -> log.info("Eq fitness: {}", equation.getLastFitness()));
     log.info("");

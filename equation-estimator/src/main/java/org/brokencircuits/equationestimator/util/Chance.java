@@ -4,7 +4,7 @@ import java.util.Random;
 
 public class Chance {
 
-  final public static long RAND_SEED = 1546904821260L;
+  final public static long RAND_SEED = 1546904821261L;
   final public static Random RAND = new Random(RAND_SEED);
   final private static int CHANCE_PRECISION = 10000;
 
