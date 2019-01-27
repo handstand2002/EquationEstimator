@@ -2,7 +2,6 @@ package org.brokencircuits.equationestimator.domain;
 
 import com.scottlogic.util.SortedList;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,8 +28,17 @@ public class Generation {
     double fitness = 0D;
     for (Integer datasetId : datasetIdList) {
       dataset.setCurrentSetId(datasetId);
-      double fitnessThisSet = Math.pow(eq.eval() - dataset.getCurrentSetSolution(), 2);
+      double diff = Math.abs(eq.eval() - dataset.getCurrentSetSolution());
+
+      double fitnessThisSet = Math.pow(diff + 1, 2);
       fitness += fitnessThisSet;
+    }
+    fitness -= datasetIdList.size();    // we added +1 to each solution difference
+
+    // if there are more than 500 nodes, make it a "less fit" solution
+    long numNodesInEq = eq.statistic().getNumDescendant();
+    if (numNodesInEq > 500) {
+      fitness += (numNodesInEq - 500);
     }
 
     eq.setLastFitness(fitness);
@@ -64,15 +72,17 @@ public class Generation {
       }
     }
 
+    log.error("Unable to select an equation");
     return null;
   }
 
   public Generation generateNext() {
     Generation newGen = new Generation();
     int numElites = (int) Math.floor(Controller.ELITISM * Controller.POP_SIZE);
-    Iterator<Equation> eqIterator = this.equationList.iterator();
+
     for (int i = 0; i < numElites; i++) {
-      newGen.addEquation(eqIterator.next());
+      Equation elite = this.equationList.get(i).clone();
+      newGen.addEquation(elite);
     }
 
     while (newGen.equationList.size() < Controller.POP_SIZE) {
@@ -81,7 +91,6 @@ public class Generation {
 
       List<Equation> childList = evolver.nodeExchange(selectOne, selectTwo);
       childList.forEach(evolver::equationMutate);   // mutate each child
-      // TODO: maybe only mutate some children?
 
       newGen.addEquation(childList.get(0));
       if (newGen.equationList.size() < Controller.POP_SIZE) {

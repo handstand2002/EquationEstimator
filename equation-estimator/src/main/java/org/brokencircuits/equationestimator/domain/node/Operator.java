@@ -28,6 +28,21 @@ public class Operator implements IDataNode {
     this.opChar = opChar;
   }
 
+  public static OpChar getOpChar(String singleChar) {
+    if (singleChar.equals("+")) {
+      return OpChar.PLUS;
+    } else if (singleChar.equals("-")) {
+      return OpChar.MINUS;
+    } else if (singleChar.equals("*")) {
+      return OpChar.MULTIPLY;
+    } else if (singleChar.equals("/")) {
+      return OpChar.DIVIDE;
+    } else {
+      log.error("Unable to retrieve OpChar for '{}'", singleChar);
+      return null;
+    }
+  }
+
   public static OpChar getOpChar(int i) {
     switch (Math.floorMod(i, 4)) {
       case 0:

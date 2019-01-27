@@ -1,17 +1,22 @@
 package org.brokencircuits.equationestimator.domain;
 
 import com.google.common.collect.Lists;
+import com.sun.xml.internal.bind.v2.runtime.reflect.opt.Const;
 import java.util.List;
+import java.util.Optional;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.brokencircuits.equationestimator.controller.Controller;
+import org.brokencircuits.equationestimator.dataset.Dataset;
 import org.brokencircuits.equationestimator.domain.node.Constant;
 import org.brokencircuits.equationestimator.domain.node.IDataNode;
 import org.brokencircuits.equationestimator.domain.node.Operator;
 import org.brokencircuits.equationestimator.domain.node.Variable;
+import org.json.JSONObject;
 
 @Slf4j
 @EqualsAndHashCode(exclude = {"leftChild", "rightChild", "parent", "container", "statistics"})
@@ -34,9 +39,12 @@ public class TreeNode {
   @Getter
   private WhichChild whichChild;
   @Setter
+  @Getter
   private Equation container;
   @Getter
   private Statistic statistics;
+
+  private static final Dataset DATASET = Dataset.getInstance();
 
   public TreeNode(Equation container, IDataNode dataNode, TreeNode leftChild, TreeNode rightChild) {
     this.dataNode = dataNode;
@@ -173,14 +181,6 @@ public class TreeNode {
     return treeStrings;
   }
 
-//  public void replaceNode(TreeNode replacement) {
-//    log.info("Tree from parent before swap:\n{}",
-//        TreeNode.treeStringsToString(TreeNode.equationTreeNode(this.getParent())));
-//    parent.setChild(replacement, whichChild);
-//    log.info("Tree from parent after swap:\n{}",
-//        TreeNode.treeStringsToString(TreeNode.equationTreeNode(this.getParent())));
-//  }
-
   /* ***************************** STATIC FUNCTIONS ***************************** */
 
   private static void equationTreeNode(TreeNode anonymousNode, int depth,
@@ -247,12 +247,13 @@ public class TreeNode {
     }
   }
 
-  public String equationReadable(boolean variableShowValue) {
+  String equationReadable(boolean variableShowValue) {
     return TreeNode.equationReadable(this, variableShowValue);
   }
 
-  public void simplify() {
+  void simplify() {
     if (dataNode.getClass() == Operator.class) {
+      Operator opDataNode = (Operator) dataNode;
       if ((statistics.getNumDescendantVariable() == 0)) {
 
         this.dataNode = new Constant(this.eval());
@@ -265,8 +266,47 @@ public class TreeNode {
       } else {
         this.getLeftChild().simplify();
         this.getRightChild().simplify();
+
+        if (opDataNode.getChar().equals("-")) {
+          if (this.getId() == 16467543) {
+            log.info("left and right child datanodes equal: {}",
+                this.getLeftChild().dataNode == this.getRightChild().dataNode);
+            log.info("Left: {}", this.getLeftChild().dataNode);
+            log.info("Right: {}", this.getRightChild().dataNode);
+          }
+          if (this.getLeftChild().dataNode == this.getRightChild().dataNode) {
+            this.dataNode = new Constant(0);
+            this.container.removeNodeSubtreeFromEquation(this.leftChild);
+            this.container.removeNodeSubtreeFromEquation(this.rightChild);
+            this.leftChild = null;
+            this.rightChild = null;
+            this.statistics.onChange();
+          }
+        } else if (opDataNode.getChar().equals("/")) {
+          if (this.getRightChild().dataNode.getClass() == Constant.class &&
+              (this.getRightChild().eval() == 0 || this.getRightChild().eval() == 1)) {
+//            swapper.addToQueue(this, this.getLeftChild().clone(null));
+            TreeNode.swapNodes(this, this.getLeftChild().clone(null));
+          }
+        } else if (opDataNode.getChar().equals("*")) {
+          if ((this.getRightChild().dataNode.getClass() == Constant.class
+              && this.getRightChild().eval() == 0)
+              || (this.getLeftChild().dataNode.getClass() == Constant.class
+              && this.getLeftChild().eval() == 0)) {
+            this.dataNode = new Constant(0);
+            this.container.removeNodeSubtreeFromEquation(this.getLeftChild());
+            this.container.removeNodeSubtreeFromEquation(this.getRightChild());
+            this.leftChild = null;
+            this.rightChild = null;
+            this.statistics.onChange();
+          }
+        }
       }
     }
+//    if (this.getParent() == null) {
+//      // root node
+//      swapper.performSwaps();
+//    }
   }
 
   public TreeNode clone(Equation newContainer) {
@@ -286,9 +326,57 @@ public class TreeNode {
       clone = new TreeNode(newContainer, newDataNode);
     }
 
-    newContainer.getNodeList().add(clone);
+    if (newContainer != null) {
+      newContainer.getNodeList().add(clone);
+    }
 
     return clone;
+  }
+
+  public JSONObject json() {
+    JSONObject obj = new JSONObject();
+    obj.put("Type", this.dataNode.getClass().getName());
+
+    if (this.dataNode.getClass() == Operator.class) {
+      obj.put("Operator", ((Operator)this.dataNode).getChar());
+      obj.put("Left", this.getLeftChild().json());
+      obj.put("Right", this.getRightChild().json());
+    } else if (this.dataNode.getClass() == Constant.class) {
+      obj.put("Constant", ((Constant)this.dataNode).eval());
+    } else if (this.dataNode.getClass() == Variable.class) {
+      obj.put("Variable", ((Variable)this.dataNode).getName());
+    }
+    return obj;
+  }
+
+  public static TreeNode fromJson(JSONObject obj, Equation container)
+      throws ClassNotFoundException {
+
+    TreeNode left = null;
+    TreeNode right = null;
+    TreeNode node = null;
+    if (obj.has("Left")) {
+      left = fromJson((JSONObject) obj.get("Left"), container);
+    }
+    if (obj.has("Right")) {
+      right = fromJson((JSONObject) obj.get("Right"), container);
+    }
+    Class nodeType = Class.forName(obj.getString("Type"));
+    if (nodeType == Operator.class) {
+      Operator dataNode = new Operator(Operator.getOpChar(obj.getString("Operator")));
+      node = new TreeNode(container, dataNode, left, right);
+    } else if (nodeType == Variable.class) {
+      Optional<Variable> dataNode = DATASET.getVariableByName(obj.getString("Variable"));
+      if (dataNode.isPresent()) {
+        node = new TreeNode(container, dataNode.get());
+      } else {
+        log.error("Unable to find variable with name '{}'", obj.getString("Variable"));
+      }
+    } else if (nodeType == Constant.class) {
+      Constant dataNode = new Constant(obj.getDouble("Constant"));
+      node = new TreeNode(container, dataNode);
+    }
+    return node;
   }
 
   public enum WhichChild {

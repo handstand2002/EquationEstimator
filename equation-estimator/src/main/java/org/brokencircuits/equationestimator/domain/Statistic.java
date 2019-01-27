@@ -26,10 +26,10 @@ public class Statistic {
   private long numDescendantConstant = 0;
 
   public Statistic(TreeNode ofNode) {
-//    log.info("Setting up statistics of node: {}", ofNode);
     linkedTreeNode = ofNode;
-
-    onChange();
+    if (ofNode != null) {
+      onChange();
+    }
   }
 
   public void onChange() {
@@ -45,26 +45,31 @@ public class Statistic {
       int directConstChildren = 0;
       int directVarChildren = 0;
 
-      IDataNode leftChild = linkedTreeNode.getLeftChild().getDataNode();
-      IDataNode rightChild = linkedTreeNode.getRightChild().getDataNode();
-      if (leftChild.getClass() == Operator.class) {
-        directOpChildren++;
-      } else if (leftChild.getClass() == Variable.class) {
-        directVarChildren++;
-      } else if (leftChild.getClass() == Constant.class) {
-        directConstChildren++;
+      Statistic leftStats = new Statistic(null);
+      Statistic rightStats = new Statistic(null);
+      if (linkedTreeNode.getLeftChild() != null) {
+        IDataNode leftChild = linkedTreeNode.getLeftChild().getDataNode();
+        if (leftChild.getClass() == Operator.class) {
+          directOpChildren++;
+        } else if (leftChild.getClass() == Variable.class) {
+          directVarChildren++;
+        } else if (leftChild.getClass() == Constant.class) {
+          directConstChildren++;
+        }
+        leftStats = linkedTreeNode.getLeftChild().getStatistics();
       }
 
-      if (rightChild.getClass() == Operator.class) {
-        directOpChildren++;
-      } else if (rightChild.getClass() == Variable.class) {
-        directVarChildren++;
-      } else if (rightChild.getClass() == Constant.class) {
-        directConstChildren++;
+      if (linkedTreeNode.getRightChild() != null) {
+        IDataNode rightChild = linkedTreeNode.getRightChild().getDataNode();
+        if (rightChild.getClass() == Operator.class) {
+          directOpChildren++;
+        } else if (rightChild.getClass() == Variable.class) {
+          directVarChildren++;
+        } else if (rightChild.getClass() == Constant.class) {
+          directConstChildren++;
+        }
+        rightStats = linkedTreeNode.getRightChild().getStatistics();
       }
-
-      Statistic leftStats = linkedTreeNode.getLeftChild().getStatistics();
-      Statistic rightStats = linkedTreeNode.getRightChild().getStatistics();
 
       numDescendant = leftStats.getNumDescendant() + rightStats.getNumDescendant() + 2;
       numDescendantOperator =

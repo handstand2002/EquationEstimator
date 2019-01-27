@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Application" type="Application" factoryName="Application" singleton="true" nameIsGenerated="true">
+    <option name="MAIN_CLASS_NAME" value="org.brokencircuits.equationestimator.Application" />
+    <module name="equation-estimator" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/equation-estimator/src/main/resources" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="org.brokencircuits.equationestimator.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

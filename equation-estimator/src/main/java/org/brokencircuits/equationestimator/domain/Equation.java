@@ -16,6 +16,7 @@ import org.brokencircuits.equationestimator.domain.node.Constant;
 import org.brokencircuits.equationestimator.domain.node.IDataNode;
 import org.brokencircuits.equationestimator.domain.node.Operator;
 import org.brokencircuits.equationestimator.domain.node.Variable;
+import org.json.JSONObject;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -37,6 +38,12 @@ public class Equation {
       sb.append(node.toString()).append("\n");
     }
     return sb.toString();
+  }
+
+  static public Equation fromJson(String json) throws ClassNotFoundException {
+    Equation newEq = new Equation();
+    newEq.setRoot(TreeNode.fromJson(new JSONObject(json), newEq));
+    return newEq;
   }
 
   static public Equation generateRandom(int avgNumOperators) throws IllegalStateException {
@@ -142,6 +149,10 @@ public class Equation {
       sb.append(" = ").append(this.eval());
     }
     return sb.toString();
+  }
+
+  public String toJson() {
+    return root.json().toString();
   }
 
   public String equationTree() {
