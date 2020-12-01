@@ -7,7 +7,7 @@ import lombok.ToString;
 
 @RequiredArgsConstructor
 @ToString
-public class Individual<T extends AttributeType> implements Cloneable {
+public class Individual<T extends AttributeType<T>> implements Cloneable {
 
   @Getter
   private final T attributes;
@@ -15,8 +15,7 @@ public class Individual<T extends AttributeType> implements Cloneable {
   @Getter
   private Double fitness = null;
 
-  @SuppressWarnings("unchecked")
   public Individual<T> clone() {
-    return new Individual<>((T) attributes.clone());
+    return new Individual<>(attributes.clone());
   }
 }

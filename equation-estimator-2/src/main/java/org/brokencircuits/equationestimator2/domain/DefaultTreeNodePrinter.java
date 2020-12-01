@@ -1,20 +1,25 @@
 package org.brokencircuits.equationestimator2.domain;
 
-public class DefaultTreeNodePrinter<T> implements TreeNodePrinter<T> {
+public class DefaultTreeNodePrinter<T extends TreeNodeDataType<T, U>, U extends Tree<T, U>> implements
+    TreeNodePrinter<T, U> {
 
   @Override
-  public String printTree(Tree<T> tree) {
+  public String printTree(Tree<T, U> tree) {
     return printTreeNode(tree.getRootNode());
   }
 
-  private String printTreeNode(TreeNode<T> node) {
-    return printTreeNodePrefix(node.getDepth())
-        + printNodeOrientation(node) + node.getData()
-        + printChild(node.getLeft())
-        + printChild(node.getRight());
+  private String printTreeNode(TreeNode<T, U> node) {
+    return printTreeNode(0, node);
   }
 
-  private String printNodeOrientation(TreeNode<T> node) {
+  private String printTreeNode(int depth, TreeNode<T, U> node) {
+    return printTreeNodePrefix(depth)
+        + printNodeOrientation(node) + node.getData()
+        + ((node.getLeft() != null) ? printTreeNode(depth + 1, node.getLeft()) : "")
+        + ((node.getRight() != null) ? printTreeNode(depth + 1, node.getRight()) : "");
+  }
+
+  private String printNodeOrientation(TreeNode<T, U> node) {
     if (node == null || node.getSide() == null) {
       return "";
     }
@@ -26,13 +31,6 @@ public class DefaultTreeNodePrinter<T> implements TreeNodePrinter<T> {
       default:
         return "";
     }
-  }
-
-  private String printChild(TreeNode<T> node) {
-    if (node != null) {
-      return printTreeNode(node);
-    }
-    return "";
   }
 
   private String printTreeNodePrefix(int depth) {

@@ -17,7 +17,7 @@ public class ControllerTest {
     byte[] desired = longToBytes(desiredLong);
     System.out.println(String.format("Desired: %s: %d", Arrays.toString(desired), desiredLong));
     FitnessEvaluator<TestType> evaluator = individual -> {
-      byte[] values = individual.getAttributes().values;
+      byte[] values = individual.values;
       double score = 0;
       for (int i = 0; i < desired.length; i++) {
         score += Math.abs((int) desired[i] - (int) values[i]) * (desired.length + 1 - i);
@@ -26,7 +26,7 @@ public class ControllerTest {
     };
 
     AttributeMutator<TestType> mutator = individual -> {
-      byte[] values = individual.getAttributes().values;
+      byte[] values = individual.values;
       int updateIndex = random.nextInt(values.length);
       values[updateIndex] = (byte) (random.nextInt(255) - 127);
     };
@@ -46,12 +46,12 @@ public class ControllerTest {
     };
 
     AttributeSwapper<TestType> swapper = (first, second) -> {
-      int length = first.getAttributes().values.length;
+      int length = first.values.length;
       int firstIndex = random.nextInt(length);
       int secondIndex = random.nextInt(length);
-      byte firstValue = first.getAttributes().values[firstIndex];
-      first.getAttributes().values[firstIndex] = second.getAttributes().values[secondIndex];
-      second.getAttributes().values[secondIndex] = firstValue;
+      byte firstValue = first.values[firstIndex];
+      first.values[firstIndex] = second.values[secondIndex];
+      second.values[secondIndex] = firstValue;
     };
 
     IndividualGenerator<TestType> generator = () -> {
@@ -59,7 +59,7 @@ public class ControllerTest {
       for (int i = 0; i < attribs.values.length; i++) {
         attribs.values[i] = (byte) (random.nextInt(255) - 127);
       }
-      return new Individual<>(attribs);
+      return attribs;
     };
 
     EvolutionaryParameters<TestType> args = EvolutionaryParameters.<TestType>builder()
@@ -70,7 +70,7 @@ public class ControllerTest {
         .generator(generator)
         .completionPredicate(p -> p.get(0).getFitness() == 0D)
         .build();
-    Controller<TestType> controller = new Controller<>(args);
+    EvolutionaryController<TestType> controller = new EvolutionaryController<>(args);
     Generation<TestType> lastGeneration = controller.run(10000, 100, 5);
 
 //    for (Individual<TestType> individual : sorted) {
@@ -79,7 +79,7 @@ public class ControllerTest {
   }
 
   @ToString
-  private static class TestType implements AttributeType {
+  private static class TestType implements AttributeType<TestType> {
 
     public final byte[] values = new byte[8];
 

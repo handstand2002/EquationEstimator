@@ -2,26 +2,32 @@ package org.brokencircuits.equationestimator2.eq;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 import lombok.Getter;
 import lombok.Setter;
 import org.brokencircuits.equationestimator2.domain.TreeNode;
 import org.brokencircuits.equationestimator2.domain.TreeNodeDataType;
+import org.brokencircuits.equationestimator2.util.MethodCallerTracker;
 
 @Getter
-public class EquationNode implements TreeNodeDataType<EquationNode> {
+public class EquationNode implements TreeNodeDataType<EquationNode, EquationTree> {
 
   @Setter
-  private TreeNode<EquationNode> container;
+  private TreeNode<EquationNode, EquationTree> container;
   private final Double constantValue;
   private final EquationNodeType nodeType;
   private final EquationOperator operator;
   private final EquationVariableReference variableReference;
+  private static final AtomicLong lastId = new AtomicLong(0);
+  private final long id;
+  private static final boolean PRINT_IDS = false;
 
   public EquationNode(double constantValue) {
     this.constantValue = constantValue;
     this.nodeType = EquationNodeType.CONSTANT;
     this.operator = null;
     this.variableReference = null;
+    id = lastId.incrementAndGet();
   }
 
   public EquationNode(EquationVariableReference variableReference) {
@@ -29,6 +35,7 @@ public class EquationNode implements TreeNodeDataType<EquationNode> {
     this.nodeType = EquationNodeType.VARIABLE;
     this.operator = null;
     this.variableReference = variableReference;
+    id = lastId.incrementAndGet();
   }
 
   public EquationNode(EquationOperator operator) {
@@ -36,6 +43,7 @@ public class EquationNode implements TreeNodeDataType<EquationNode> {
     this.nodeType = EquationNodeType.OPERATOR;
     this.operator = operator;
     this.variableReference = null;
+    id = lastId.incrementAndGet();
   }
 
   public Double getVariableValue() {
@@ -44,23 +52,28 @@ public class EquationNode implements TreeNodeDataType<EquationNode> {
   }
 
   public String toString() {
+    StringBuilder sb = new StringBuilder(PRINT_IDS ? "[" + id + "] " : "");
     if (nodeType == EquationNodeType.CONSTANT) {
-      return String.valueOf(constantValue);
+      sb.append(constantValue);
     } else if (nodeType == EquationNodeType.OPERATOR) {
       Objects.requireNonNull(operator);
       switch (operator) {
-        case PLUS:
-          return "+";
+        case ADD:
+          sb.append("+");
+          break;
         case MULTIPLY:
-          return "*";
+          sb.append("*");
+          break;
         default:
           throw new IllegalArgumentException("Unknown Operator type: " + operator);
       }
     } else if (nodeType == EquationNodeType.VARIABLE) {
       Objects.requireNonNull(variableReference);
-      return variableReference.toString();
+      sb.append(variableReference);
+    } else {
+      throw new IllegalArgumentException("Unknown NodeType " + nodeType);
     }
-    throw new IllegalArgumentException("Unknown NodeType " + nodeType);
+    return sb.toString();
   }
 
   public double evalOperator(double arg1, double arg2) {
@@ -69,6 +82,7 @@ public class EquationNode implements TreeNodeDataType<EquationNode> {
   }
 
   public double eval() {
+    MethodCallerTracker.onMethodCall("EquationNode#eval");
     switch (nodeType) {
       case CONSTANT:
         Objects.requireNonNull(constantValue);
@@ -85,4 +99,18 @@ public class EquationNode implements TreeNodeDataType<EquationNode> {
     }
   }
 
+  @Override
+  public EquationNode clone() {
+    MethodCallerTracker.onMethodCall("EquationNode#clone");
+    switch (nodeType) {
+      case OPERATOR:
+        return new EquationNode(operator);
+      case VARIABLE:
+        return new EquationNode(variableReference);
+      case CONSTANT:
+        return new EquationNode(constantValue);
+      default:
+        throw new IllegalStateException("Unknown node type " + nodeType);
+    }
+  }
 }

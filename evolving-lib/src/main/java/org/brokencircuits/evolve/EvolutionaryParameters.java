@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Builder
 @Getter
-public class EvolutionaryParameters<T extends AttributeType> {
+public class EvolutionaryParameters<T extends AttributeType<T>> {
 
   private final AttributeMutator<T> mutator;
   private final AttributeSwapper<T> swapper;

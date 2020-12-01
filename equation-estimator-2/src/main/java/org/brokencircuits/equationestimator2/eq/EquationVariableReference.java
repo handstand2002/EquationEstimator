@@ -1,9 +1,18 @@
 package org.brokencircuits.equationestimator2.eq;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@RequiredArgsConstructor
 public class EquationVariableReference {
 
-  public Double getCurrentValue() {
-    return null;
-    // TODO: update this value from the "currently assigned variable set"
+  private final String name;
+  @Setter
+  private Double currentValue;
+
+  public String toString() {
+    return name;
   }
 }

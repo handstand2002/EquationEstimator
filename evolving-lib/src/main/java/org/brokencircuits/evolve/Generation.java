@@ -3,6 +3,7 @@ package org.brokencircuits.evolve;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 @Slf4j
 @Getter
-public class Generation<T extends AttributeType> {
+public class Generation<T extends AttributeType<T>> {
 
   private final List<Individual<T>> individuals;
   private final EvolutionaryParameters<T> args;
@@ -25,8 +26,8 @@ public class Generation<T extends AttributeType> {
     this.args = args;
     individuals = new ArrayList<>(numIndividuals);
     for (int i = 0; i < numIndividuals; i++) {
-      Individual<T> newIndividual = args.getGenerator().create();
-      individuals.add(newIndividual);
+      T newAttributes = args.getGenerator().create();
+      individuals.add(new Individual<>(newAttributes));
     }
     isComplete = false;
     generationNumber = 0;
@@ -69,12 +70,12 @@ public class Generation<T extends AttributeType> {
       Individual<T> child2 = selectedTwo.clone();
 
       // do some gene exchange
-      args.getSwapper().apply(child1, child2);
+      args.getSwapper().apply(child1.getAttributes(), child2.getAttributes());
       log.trace("Children after gene swap: {}; {}", child1, child2);
 
       // apply some mutation
-      args.getMutator().apply(child1);
-      args.getMutator().apply(child2);
+      args.getMutator().apply(child1.getAttributes());
+      args.getMutator().apply(child2.getAttributes());
       log.trace("Children after mutation: {}; {}", child1, child2);
 
       newGenIndividuals.add(child1);
@@ -89,7 +90,7 @@ public class Generation<T extends AttributeType> {
 
     List<Individual<T>> scoredIndividuals = newGenIndividuals.stream()
         .peek(i -> {
-          double fitness = args.getEvaluator().evaluate(i);
+          double fitness = args.getEvaluator().evaluate(i.getAttributes());
           if (fitness < 0) {
             throw new InvalidFitnessEvaluation(
                 "Fitness must be greater than or equal to 0, with 0 being a perfect score");
@@ -102,7 +103,8 @@ public class Generation<T extends AttributeType> {
     log.debug("Highest scoring individual from generation [{}]: {}", generationNumber,
         scoredIndividuals.get(0));
 
-    boolean isComplete = args.getCompletionPredicate().isComplete(scoredIndividuals);
+    boolean isComplete = Optional.ofNullable(args.getCompletionPredicate())
+        .map(p -> p.isComplete(scoredIndividuals)).orElse(false);
     return new Generation<>(scoredIndividuals, args, isComplete, generationNumber + 1);
   }
 }

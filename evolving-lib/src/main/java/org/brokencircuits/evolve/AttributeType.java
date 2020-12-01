@@ -1,6 +1,6 @@
 package org.brokencircuits.evolve;
 
-public interface AttributeType extends Cloneable {
+public interface AttributeType<T> {
 
-  Object clone();
+  T clone();
 }

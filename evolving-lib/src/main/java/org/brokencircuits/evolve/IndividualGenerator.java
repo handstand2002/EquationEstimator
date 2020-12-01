@@ -1,6 +1,6 @@
 package org.brokencircuits.evolve;
 
-public interface IndividualGenerator<T extends AttributeType> {
+public interface IndividualGenerator<T extends AttributeType<T>> {
 
-  Individual<T> create();
+  T create();
 }

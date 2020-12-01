@@ -1,6 +1,6 @@
 package org.brokencircuits.evolve;
 
-public interface AttributeMutator<T extends AttributeType> {
+public interface AttributeMutator<T extends AttributeType<T>> {
 
-  void apply(Individual<T> individual);
+  void apply(T individual);
 }

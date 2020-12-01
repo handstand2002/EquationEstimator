@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 @Slf4j
 @RequiredArgsConstructor
-public class Controller<T extends AttributeType> {
+public class EvolutionaryController<T extends AttributeType<T>> {
 
   private final EvolutionaryParameters<T> args;
 
@@ -14,6 +14,7 @@ public class Controller<T extends AttributeType> {
     Generation<T> gen = createGeneration(individuals);
     for (long i = 0; i < generations; i++) {
       gen = gen.newGeneration(elites);
+      log.info("Best fitness of generation: {}", gen.getIndividuals().get(0).getFitness());
       if (gen.isComplete()) {
         return gen;
       }

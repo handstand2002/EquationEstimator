@@ -4,7 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum EquationOperator {
-  PLUS(Double::sum),
+  ADD(Double::sum),
   MULTIPLY((arg1, arg2) -> arg1 * arg2);
 
   private final OperatorEval evalMethod;

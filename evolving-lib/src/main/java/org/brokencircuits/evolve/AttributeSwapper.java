@@ -1,6 +1,6 @@
 package org.brokencircuits.evolve;
 
-public interface AttributeSwapper<T extends AttributeType> {
+public interface AttributeSwapper<T extends AttributeType<T>> {
 
-  void apply(Individual<T> first, Individual<T> second);
+  void apply(T first, T second);
 }

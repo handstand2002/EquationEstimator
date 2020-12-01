@@ -4,23 +4,29 @@ import org.brokencircuits.equationestimator2.domain.Tree;
 import org.brokencircuits.equationestimator2.domain.TreeNode;
 import org.brokencircuits.equationestimator2.domain.TreeNodePrinter;
 
-public class EquationTreePrinter implements TreeNodePrinter<EquationNode> {
+public class EquationTreePrinter implements TreeNodePrinter<EquationNode, EquationTree> {
 
   @Override
-  public String printTree(Tree<EquationNode> tree) {
+  public String printTree(Tree<EquationNode, EquationTree> tree) {
     return printEquationNode(tree.getRootNode());
   }
 
-  private <T> String printEquationNode(TreeNode<EquationNode> node) {
+  private String printEquationNode(TreeNode<EquationNode, EquationTree> node) {
 
-    if (node.getData().isTerminal()) {
+    if (node.getData().getNodeType() != EquationNodeType.OPERATOR) {
       return String.valueOf(node.getData());
     }
-    return String.format("%s %s %s", printChild(node.getLeft()), node.getData(),
-        printChild(node.getRight()));
+    String pattern = "(%s %s %s)";
+    if (node.getParent() == null
+        || node.getParent().getData().getOperator() == EquationOperator.ADD) {
+      // don't need to use parentheses if parent node is addition or if it's root
+      pattern = "%s %s %s";
+    }
+    return String
+        .format(pattern, printChild(node.getLeft()), node.getData(), printChild(node.getRight()));
   }
 
-  private <T> String printChild(TreeNode<EquationNode> node) {
+  private String printChild(TreeNode<EquationNode, EquationTree> node) {
     if (node != null) {
       return printEquationNode(node);
     }
