@@ -2,5 +2,5 @@ package org.brokencircuits.evolve;
 
 public interface IndividualGenerator<T extends AttributeType<T>> {
 
-  T create();
+  T create(HistoryMetadata metadata);
 }

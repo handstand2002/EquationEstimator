@@ -1,6 +1,7 @@
 package org.brokencircuits.evolve;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -26,7 +27,15 @@ public class Generation<T extends AttributeType<T>> {
     this.args = args;
     individuals = new ArrayList<>(numIndividuals);
     for (int i = 0; i < numIndividuals; i++) {
-      T newAttributes = args.getGenerator().create();
+      HistoryMetadata metadata = HistoryMetadata.builder()
+          .maxGenerations(args.getNumGenerations())
+          .genInterval(args.getGenerationStatisticParameters().getGenerationInterval())
+          .fitnessChangeByGeneration(Collections.emptyMap())
+          .currentGen(-1)
+          .currentFitness(null)
+          .lastCapturedGen(null)
+          .build();
+      T newAttributes = args.getGenerator().create(metadata);
       individuals.add(new Individual<>(newAttributes));
     }
     isComplete = false;
@@ -34,8 +43,8 @@ public class Generation<T extends AttributeType<T>> {
   }
 
   /**
-   * Used in {@link Generation#newGeneration(int)} to instantiate a new generation with a given
-   * population
+   * Used in {@link Generation#newGeneration(int, int, HistoryMetadata)} to instantiate a new
+   * generation with a given population
    */
   private Generation(List<Individual<T>> withIndividuals, EvolutionaryParameters<T> args,
       boolean isComplete, long generationNumber) {
@@ -46,7 +55,8 @@ public class Generation<T extends AttributeType<T>> {
   }
 
   @NotNull
-  public Generation<T> newGeneration(int elites) {
+  public Generation<T> newGeneration(int elites, int newIndividualsPerGen,
+      HistoryMetadata metadata) {
 
     List<Individual<T>> newGenIndividuals = new ArrayList<>(individuals.size());
     log.trace("{} Elite individuals chosen to pass into the next generation", elites);
@@ -54,6 +64,13 @@ public class Generation<T extends AttributeType<T>> {
       Individual<T> elite = individuals.get(i);
       newGenIndividuals.add(elite);
       log.trace("Elite individual: {}", elite);
+    }
+
+    log.trace("{} new individuals to be added to next generation", newIndividualsPerGen);
+    for (int i = 0; i < newIndividualsPerGen; i++) {
+      Individual<T> newIndividual = new Individual<>(args.getGenerator().create(metadata));
+      newGenIndividuals.add(newIndividual);
+      log.trace("New individual: {}", newIndividual);
     }
 
     log.trace("Performing selection, gene exchange, and mutation");
@@ -70,12 +87,12 @@ public class Generation<T extends AttributeType<T>> {
       Individual<T> child2 = selectedTwo.clone();
 
       // do some gene exchange
-      args.getSwapper().apply(child1.getAttributes(), child2.getAttributes());
+      args.getSwapper().apply(child1.getAttributes(), child2.getAttributes(), metadata);
       log.trace("Children after gene swap: {}; {}", child1, child2);
 
       // apply some mutation
-      args.getMutator().apply(child1.getAttributes());
-      args.getMutator().apply(child2.getAttributes());
+      args.getMutator().apply(child1.getAttributes(), metadata);
+      args.getMutator().apply(child2.getAttributes(), metadata);
       log.trace("Children after mutation: {}; {}", child1, child2);
 
       newGenIndividuals.add(child1);

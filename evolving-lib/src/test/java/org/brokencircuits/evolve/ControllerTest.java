@@ -25,7 +25,7 @@ public class ControllerTest {
       return score;
     };
 
-    AttributeMutator<TestType> mutator = individual -> {
+    AttributeMutator<TestType> mutator = (individual, metadata) -> {
       byte[] values = individual.values;
       int updateIndex = random.nextInt(values.length);
       values[updateIndex] = (byte) (random.nextInt(255) - 127);
@@ -45,7 +45,7 @@ public class ControllerTest {
       return scoredIndividuals.get(useIndex);
     };
 
-    AttributeSwapper<TestType> swapper = (first, second) -> {
+    AttributeSwapper<TestType> swapper = (first, second, metadata) -> {
       int length = first.values.length;
       int firstIndex = random.nextInt(length);
       int secondIndex = random.nextInt(length);
@@ -54,7 +54,7 @@ public class ControllerTest {
       second.values[secondIndex] = firstValue;
     };
 
-    IndividualGenerator<TestType> generator = () -> {
+    IndividualGenerator<TestType> generator = (HistoryMetadata metadata) -> {
       TestType attribs = new TestType();
       for (int i = 0; i < attribs.values.length; i++) {
         attribs.values[i] = (byte) (random.nextInt(255) - 127);
@@ -69,9 +69,15 @@ public class ControllerTest {
         .swapper(swapper)
         .generator(generator)
         .completionPredicate(p -> p.get(0).getFitness() == 0D)
+        .numIndividuals(100)
+        .numGenerations(100)
+        .numElites(5)
+        .numNewIndividualsPerGeneration(0)
+        .generationStatisticParameters(
+            GenerationStatisticParameters.builder().generationInterval(100).build())
         .build();
     EvolutionaryController<TestType> controller = new EvolutionaryController<>(args);
-    Generation<TestType> lastGeneration = controller.run(10000, 100, 5);
+    Generation<TestType> lastGeneration = controller.run();
 
 //    for (Individual<TestType> individual : sorted) {
 //      System.out.println(String.format("Individual: %s", individual));
