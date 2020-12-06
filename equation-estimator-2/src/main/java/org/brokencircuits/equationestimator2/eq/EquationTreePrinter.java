@@ -18,8 +18,9 @@ public class EquationTreePrinter implements TreeNodePrinter<EquationNode, Equati
     }
     String pattern = "(%s %s %s)";
     if (node.getParent() == null
-        || node.getParent().getData().getOperator() == EquationOperator.ADD) {
-      // don't need to use parentheses if parent node is addition or if it's root
+        || (node.getData().getOperator().getPriority() <= node.getParent().getData().getOperator()
+        .getPriority())) {
+      // don't need to use parentheses if parent node is a lower priority operation, or if node is root
       pattern = "%s %s %s";
     }
     return String

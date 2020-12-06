@@ -52,37 +52,12 @@ public class EquationNode implements TreeNodeDataType<EquationNode, EquationTree
   }
 
   public String toString() {
-    StringBuilder sb = new StringBuilder(PRINT_IDS ? "[" + id + "] " : "");
-    if (nodeType == EquationNodeType.CONSTANT) {
-      sb.append(constantValue);
-    } else if (nodeType == EquationNodeType.OPERATOR) {
-      Objects.requireNonNull(operator);
-      switch (operator) {
-        case ADD:
-          sb.append("+");
-          break;
-        case MULTIPLY:
-          sb.append("*");
-          break;
-        default:
-          throw new IllegalArgumentException("Unknown Operator type: " + operator);
-      }
-    } else if (nodeType == EquationNodeType.VARIABLE) {
-      Objects.requireNonNull(variableReference);
-      sb.append(variableReference);
-    } else {
-      throw new IllegalArgumentException("Unknown NodeType " + nodeType);
-    }
-    return sb.toString();
-  }
-
-  public double evalOperator(double arg1, double arg2) {
-    Objects.requireNonNull(operator);
-    return operator.getEvalMethod().apply(arg1, arg2);
+    return (PRINT_IDS ? "[" + id + "] " : "") + nodeType.getStringValue().apply(this);
   }
 
   public double eval() {
     MethodCallerTracker.onMethodCall("EquationNode#eval");
+
     switch (nodeType) {
       case CONSTANT:
         Objects.requireNonNull(constantValue);

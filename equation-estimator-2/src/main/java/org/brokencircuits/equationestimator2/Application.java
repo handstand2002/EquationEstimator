@@ -3,6 +3,7 @@ package org.brokencircuits.equationestimator2;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -13,8 +14,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.brokencircuits.equationestimator2.domain.DefaultTreeNodePrinter;
 import org.brokencircuits.equationestimator2.domain.TreeNode;
-import org.brokencircuits.equationestimator2.domain.TreeStatistics;
 import org.brokencircuits.equationestimator2.eq.EquationData;
 import org.brokencircuits.equationestimator2.eq.EquationDataSet;
 import org.brokencircuits.equationestimator2.eq.EquationNode;
@@ -31,7 +32,8 @@ import org.brokencircuits.evolve.EvolutionaryController;
 import org.brokencircuits.evolve.EvolutionaryParameters;
 import org.brokencircuits.evolve.FitnessEvaluator;
 import org.brokencircuits.evolve.Generation;
-import org.brokencircuits.evolve.Individual;
+import org.brokencircuits.evolve.GenerationStatisticParameters;
+import org.brokencircuits.evolve.HistoryMetadata;
 import org.brokencircuits.evolve.IndividualGenerator;
 import org.brokencircuits.evolve.IndividualSelector;
 import org.springframework.boot.CommandLineRunner;
@@ -51,7 +53,7 @@ public class Application {
   IndividualGenerator<EquationTree> generator(
       EquationData dataSets) {
     EquationTreePrinter printer = new EquationTreePrinter();
-    return () -> {
+    return (HistoryMetadata metadata) -> {
       EquationTree tree = RandomEquationUtil.createRandomTree(dataSets.getVariables());
       tree.setPrinter(printer);
       return tree;
@@ -97,16 +99,18 @@ public class Application {
         // set the current value for each variable to the set's value
         dataSet.getValues().forEach(EquationVariableReference::setCurrentValue);
 
-        fitness += Math.abs(tree.getRootNode().getData().eval() - dataSet.getExpectedOutput());
+        fitness += Math
+            .pow(Math.abs(tree.getRootNode().getData().eval() - dataSet.getExpectedOutput()) * 4,
+                2);
       }
 
-      auditTree(tree);
       // any trees without variables should be penalized
       Map<EquationNodeType, Set<TreeNode<EquationNode, EquationTree>>> nodesByType = tree
           .getNodesByType();
-      if (nodesByType.getOrDefault(EquationNodeType.VARIABLE, Collections.emptySet()).isEmpty()) {
-        fitness = Math.pow(fitness, 3);
-      }
+      int treeNodeCount = nodesByType.values().stream().mapToInt(Set::size).sum();
+
+      // penalize trees with more than 100 nodes, +10 fitness for each node over limit
+      fitness += Math.max(0, treeNodeCount - 250) * 20;
       return fitness;
     };
   }
@@ -159,12 +163,16 @@ public class Application {
 
   @Bean
   AttributeMutator<EquationTree> mutator(EquationData dataSets) {
-    return tree -> {
-      TreeNode<EquationNode, EquationTree> node = tree.randomOperatorNode();
-      Objects.requireNonNull(node);
-      TreeNode<EquationNode, EquationTree> replacementNode = RandomEquationUtil
-          .createSubtree(dataSets.getVariables(), null);
-      tree.swap(node, replacementNode);
+    return (tree, metadata) -> {
+
+      int i = RandomUtil.RANDOM.nextInt(100);
+      if (i < 5) {
+        TreeNode<EquationNode, EquationTree> node = tree.randomOperatorNode();
+        Objects.requireNonNull(node);
+        TreeNode<EquationNode, EquationTree> replacementNode = RandomEquationUtil
+            .createSubtree(dataSets.getVariables(), null);
+        tree.swap(node, replacementNode);
+      }
     };
   }
 
@@ -184,14 +192,71 @@ public class Application {
 
   @Bean
   AttributeSwapper<EquationTree> swapper() {
-    return (first, second) -> {
-      TreeNode<EquationNode, EquationTree> node1 = first.randomOperatorNode();
-      TreeNode<EquationNode, EquationTree> node2 = second.randomOperatorNode();
+    return (first, second, metadata) -> {
+
+      Map<Long, Double> fitnessChangeByGeneration = metadata.getFitnessChangeByGeneration();
+
+      // calculate a staleness factor to determine if the population has become somewhat stale,
+      // requiring that the swap nodes are higher up the tree, causing a more drastic exchange
+      Long lastStatGen = metadata.getLastCapturedGen();
+
+      // staleness is a scale from 0 to 1, with 1 being completely stale, 0.5 meaning the fitness
+      // has halved since the last statistic capture
+      double staleness = 0;
+      if (lastStatGen != null && metadata.getCurrentFitness() != null) {
+        Double lastFitnessChange = Math.abs(fitnessChangeByGeneration.get(lastStatGen));
+        Double currentFitness = metadata.getCurrentFitness();
+        staleness = currentFitness / (currentFitness + lastFitnessChange);
+      }
+
+      TreeNode<EquationNode, EquationTree> node1 = chooseNodeForSwap(first, staleness);
+      TreeNode<EquationNode, EquationTree> node2 = chooseNodeForSwap(second, staleness);
       Objects.requireNonNull(node1);
       Objects.requireNonNull(node2);
 
       first.swap(node1, node2);
     };
+  }
+
+  private TreeNode<EquationNode, EquationTree> chooseNodeForSwap(EquationTree tree,
+      double staleness) {
+    Set<TreeNode<EquationNode, EquationTree>> varNodes = tree.getNodesByType()
+        .getOrDefault(EquationNodeType.VARIABLE, Collections.emptySet());
+    Set<TreeNode<EquationNode, EquationTree>> constantNodes = tree.getNodesByType()
+        .getOrDefault(EquationNodeType.CONSTANT, Collections.emptySet());
+
+    List<TreeNode<EquationNode, EquationTree>> terminalNodes = new ArrayList<>(
+        varNodes.size() + constantNodes.size());
+    terminalNodes.addAll(varNodes);
+    terminalNodes.addAll(constantNodes);
+    int i = RandomUtil.RANDOM.nextInt(terminalNodes.size());
+    TreeNode<EquationNode, EquationTree> firstTerminal = terminalNodes.get(i);
+    List<TreeNode<EquationNode, EquationTree>> hierarchy = new LinkedList<>();
+
+    // push hierarchy onto list, so terminal node is at [0] and root is at the end
+    TreeNode<EquationNode, EquationTree> crawler = firstTerminal;
+    while (crawler != null) {
+      hierarchy.add(crawler);
+      crawler = crawler.getParent();
+    }
+    if (hierarchy.size() == 1) {
+      return hierarchy.get(0);
+    }
+
+    int numNodes = hierarchy.size();
+    // choose an operation node from mid-tree for swapping. The more stale the population is,
+    // the more likely the node will be higher in the tree
+    int minNode = Math.toIntExact(Math.round(Math.floor(0.1 * numNodes)));
+    // if staleness is less than .95, activityFactor will be 0; .96 => 0.2, .97 => 0.4, ..., 1.0 => 1.0
+    double activityFactor = Math.max(staleness - 0.95, 0) * 20;
+    int maxNode = Math
+        .toIntExact(Math.round(Math.floor((0.1 + (0.7 * activityFactor)) * numNodes)));
+    if (maxNode == minNode) {
+      return hierarchy.get(minNode);
+    }
+    int chooseHierachyNode = RandomUtil.RANDOM.nextInt(maxNode - minNode) + minNode;
+
+    return hierarchy.get(chooseHierachyNode);
   }
 
   @Bean
@@ -200,7 +265,8 @@ public class Application {
       FitnessEvaluator<EquationTree> evaluator,
       AttributeMutator<EquationTree> mutator,
       IndividualSelector<EquationTree> selector,
-      AttributeSwapper<EquationTree> swapper) {
+      AttributeSwapper<EquationTree> swapper,
+      EquationData dataSets) {
     return args -> {
 
       try {
@@ -210,16 +276,53 @@ public class Application {
             .mutator(mutator)
             .selector(selector)
             .swapper(swapper)
+            .generationStatisticParameters(GenerationStatisticParameters.builder()
+                .generationInterval(30)
+                .build())
+            .numElites(5)
+            .numGenerations(1000)
+            .numIndividuals(100)
+            .numNewIndividualsPerGeneration(5)
             .build();
 
         EvolutionaryController<EquationTree> controller = new EvolutionaryController<>(params);
-        Generation<EquationTree> newGeneration = controller.run(100, 100, 5);
+        Generation<EquationTree> newGeneration = controller.run();
 
+        DefaultTreeNodePrinter<EquationNode, EquationTree> defaultPrinter = new DefaultTreeNodePrinter<>();
+        EquationTree bestTree = newGeneration.getIndividuals().get(0).getAttributes();
         MethodCallerTracker.log();
-        log.info("Best fitness: \n{}", newGeneration.getIndividuals().get(0).getAttributes());
-        log.info("Num Nodes: {}",
-            newGeneration.getIndividuals().stream().map(Individual::getAttributes)
-                .map(EquationTree::getStats).mapToLong(TreeStatistics::getNodeCount).sum());
+        log.info("Best fitness: \n{}", bestTree);
+        log.info("Best fitness: \n{}", defaultPrinter.printTree(bestTree));
+
+        // put together the inputs/outputs into a tab-separated table
+        StringBuilder sb = new StringBuilder();
+        for (EquationVariableReference variable : dataSets.getVariables()) {
+          sb.append(variable.getName()).append("\t");
+        }
+        sb.append("Output\n");
+
+        for (EquationDataSet dataSet : dataSets.getDataSets()) {
+          dataSet.getValues().forEach(EquationVariableReference::setCurrentValue);
+
+          for (EquationVariableReference variable : dataSets.getVariables()) {
+            sb.append(dataSet.getValues().get(variable)).append("\t");
+          }
+          sb.append(bestTree.getRootNode().getData().eval()).append("\n");
+        }
+        log.info("Output: \n{}", sb.toString());
+
+        //EquationData dataSets) {
+        //    return tree -> {
+        //      double fitness = 0;
+        //      for (EquationDataSet dataSet : dataSets.getDataSets()) {
+        //
+        //        // set the current value for each variable to the set's value
+        //        dataSet.getValues().forEach(EquationVariableReference::setCurrentValue);
+        //
+        //        fitness += Math
+        //            .pow(Math.abs(tree.getRootNode().getData().eval() - dataSet.getExpectedOutput()) * 10,
+        //                2);
+        //      }
 
       } catch (Exception e) {
         e.printStackTrace();
