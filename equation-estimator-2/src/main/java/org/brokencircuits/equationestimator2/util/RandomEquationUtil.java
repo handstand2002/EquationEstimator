@@ -143,14 +143,10 @@ public class RandomEquationUtil {
     return new EquationNode(availableValues[i]);
   }
 
-  private static double modulus(double initial, double modValue) {
-    return (initial % modValue + modValue) % modValue;
-  }
-
   private static EquationNodeType newNodeType() {
     int r = RandomUtil.RANDOM.nextInt(100);
 
-    if (r < 40) {
+    if (r < 50) {
       return EquationNodeType.OPERATOR;
     } else {
       int i = RandomUtil.RANDOM.nextInt(100);

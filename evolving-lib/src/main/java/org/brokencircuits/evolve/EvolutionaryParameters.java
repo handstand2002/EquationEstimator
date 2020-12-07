@@ -23,4 +23,7 @@ public class EvolutionaryParameters<T extends AttributeType<T>> {
   private final int numElites = 0;
   @Default
   private final int numNewIndividualsPerGeneration = 0;
+  @Default
+  private final MultiplePopulationParameters multiplePopulationParameters = MultiplePopulationParameters
+      .builder().build();
 }

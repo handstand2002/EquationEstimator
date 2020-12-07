@@ -1,65 +1,63 @@
 package org.brokencircuits.evolve;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 
 @Slf4j
 @RequiredArgsConstructor
 public class EvolutionaryController<T extends AttributeType<T>> {
 
   private final EvolutionaryParameters<T> args;
-  private final Map<Long, Double> fitnessChangeByGeneration = new LinkedHashMap<>();
-  private Double lastCollectedFitness = null;
-  private Long lastGenerationStatsCaptured = null;
 
-  public Generation<T> run() {
-    Generation<T> gen = createGeneration(args.getNumIndividuals());
+  public List<Population<T>> run() {
 
-    Individual<T> bestIndividual = null;
-    for (long i = 0; i < args.getNumGenerations(); i++) {
-      HistoryMetadata metadata = HistoryMetadata.builder()
-          .currentFitness(i == 0 ? null : gen.getIndividuals().get(0).getFitness())
-          .currentGen(i)
-          .fitnessChangeByGeneration(fitnessChangeByGeneration)
-          .genInterval(args.getGenerationStatisticParameters().getGenerationInterval())
-          .maxGenerations(args.getNumGenerations())
-          .lastCapturedGen(lastGenerationStatsCaptured)
-          .build();
-
-      gen = gen
-          .newGeneration(args.getNumElites(), args.getNumNewIndividualsPerGeneration(), metadata);
-      if (gen.getIndividuals().get(0) != bestIndividual) {
-        bestIndividual = gen.getIndividuals().get(0);
-        log.info("Best fitness of generation {}: {}", i + 1,
-            gen.getIndividuals().get(0).getFitness());
-      }
-      if (i > 1) {
-        if (lastCollectedFitness == null) {
-          Objects.requireNonNull(bestIndividual);
-          lastCollectedFitness = bestIndividual.getFitness();
-        }
-        if (i % args.getGenerationStatisticParameters().getGenerationInterval() == 0) {
-          lastGenerationStatsCaptured = i;
-          Objects.requireNonNull(bestIndividual);
-          fitnessChangeByGeneration.put(i, bestIndividual.getFitness() - lastCollectedFitness);
-          lastCollectedFitness = bestIndividual.getFitness();
-        }
-      }
-      if (gen.isComplete()) {
-        return gen;
-      }
+    int numPopulations = args.getMultiplePopulationParameters().getNumPopulations();
+    List<Population<T>> populations = new ArrayList<>(numPopulations);
+    for (int i = 0; i < numPopulations; i++) {
+      populations.add(new Population<>(args));
     }
 
-    return gen;
+    int numEliteSwap = Math.toIntExact(args.getMultiplePopulationParameters().getNumEliteSwap());
+
+    for (int i = 0; i < args.getNumGenerations(); i++) {
+      List<T> toSwap = new ArrayList<>(numPopulations * numEliteSwap);
+
+      if (numPopulations > 1 && args.getMultiplePopulationParameters()
+          .getMigrateIndividualsTrigger().getAsBoolean()) {
+        log.info("Triggered migration");
+        for (Population<T> population : populations) {
+          toSwap.addAll(population.selectForPopulationSwap());
+        }
+        Collections.shuffle(toSwap);
+      }
+      Queue<T> toSwapQueue = new LinkedBlockingQueue<>(toSwap);
+
+      for (Population<T> population : populations) {
+        Collection<T> swapped = new ArrayList<>(numEliteSwap);
+        for (int j = 0; j < numEliteSwap && !toSwapQueue.isEmpty(); j++) {
+          swapped.add(toSwapQueue.poll());
+        }
+        population.advanceGeneration(i, swapped);
+      }
+
+      if (i % 100 == 0) {
+        Optional<Population<T>> bestPop = populations.stream().min(Comparator
+            .comparing(p -> p.getCurrentGeneration().getIndividuals().get(0).getFitness()));
+        T bestTree = bestPop.get().getCurrentGeneration().getIndividuals().get(0).getAttributes();
+        log.info("Best fitness for gen {}: \n{}", i, bestTree);
+      }
+
+    }
+
+    return populations;
   }
 
-  @NotNull
-  private Generation<T> createGeneration(int individuals) {
-
-    return new Generation<>(individuals, args);
-  }
 }

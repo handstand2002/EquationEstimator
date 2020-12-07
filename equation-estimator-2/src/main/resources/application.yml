@@ -1,0 +1,9 @@
+evolve.equation:
+  num-generations: 1000
+  num-individuals: 100
+  num-elites: 5
+  num-new-individuals-per-generation: 5
+  parallel:
+    num-populations: 1
+    num-swap-per-pop: 0
+    chance-for-swap: 0

@@ -1,6 +1,7 @@
 package org.brokencircuits.evolve;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -19,6 +20,7 @@ public class Generation<T extends AttributeType<T>> {
   private final EvolutionaryParameters<T> args;
   private final boolean isComplete;
   private final long generationNumber;
+  private boolean isSorted = false;
 
   /**
    * Used by controller to instantiate brand new random individuals
@@ -43,8 +45,8 @@ public class Generation<T extends AttributeType<T>> {
   }
 
   /**
-   * Used in {@link Generation#newGeneration(int, int, HistoryMetadata)} to instantiate a new
-   * generation with a given population
+   * Used in {@link Generation#newGeneration(int, int, HistoryMetadata, Collection)} to instantiate
+   * a new generation with a given population
    */
   private Generation(List<Individual<T>> withIndividuals, EvolutionaryParameters<T> args,
       boolean isComplete, long generationNumber) {
@@ -56,7 +58,9 @@ public class Generation<T extends AttributeType<T>> {
 
   @NotNull
   public Generation<T> newGeneration(int elites, int newIndividualsPerGen,
-      HistoryMetadata metadata) {
+      HistoryMetadata metadata, Collection<T> migrated) {
+
+    sort();
 
     List<Individual<T>> newGenIndividuals = new ArrayList<>(individuals.size());
     log.trace("{} Elite individuals chosen to pass into the next generation", elites);
@@ -65,6 +69,12 @@ public class Generation<T extends AttributeType<T>> {
       newGenIndividuals.add(elite);
       log.trace("Elite individual: {}", elite);
     }
+
+    log.trace("{} Migrant individuals received for next generation", migrated.size());
+    migrated.stream().map(Individual::new).forEach(e -> {
+      log.trace("Population received migrated individual: {}", e);
+      newGenIndividuals.add(e);
+    });
 
     log.trace("{} new individuals to be added to next generation", newIndividualsPerGen);
     for (int i = 0; i < newIndividualsPerGen; i++) {
@@ -122,6 +132,26 @@ public class Generation<T extends AttributeType<T>> {
 
     boolean isComplete = Optional.ofNullable(args.getCompletionPredicate())
         .map(p -> p.isComplete(scoredIndividuals)).orElse(false);
-    return new Generation<>(scoredIndividuals, args, isComplete, generationNumber + 1);
+    Generation<T> newGen = new Generation<>(scoredIndividuals, args, isComplete,
+        generationNumber + 1);
+    newGen.isSorted = true;
+    return newGen;
+  }
+
+  public void sort() {
+    if (isSorted) {
+      return;
+    }
+    individuals.forEach(i -> {
+      double fitness = args.getEvaluator().evaluate(i.getAttributes());
+      if (fitness < 0) {
+        throw new InvalidFitnessEvaluation(
+            "Fitness must be greater than or equal to 0, with 0 being a perfect score");
+      }
+      i.setFitness(fitness);
+    });
+
+    individuals.sort(Comparator.comparing(Individual::getFitness));
+    isSorted = true;
   }
 }

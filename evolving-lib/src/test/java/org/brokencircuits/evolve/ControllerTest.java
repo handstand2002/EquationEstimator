@@ -77,7 +77,7 @@ public class ControllerTest {
             GenerationStatisticParameters.builder().generationInterval(100).build())
         .build();
     EvolutionaryController<TestType> controller = new EvolutionaryController<>(args);
-    Generation<TestType> lastGeneration = controller.run();
+    controller.run();
 
 //    for (Individual<TestType> individual : sorted) {
 //      System.out.println(String.format("Individual: %s", individual));
